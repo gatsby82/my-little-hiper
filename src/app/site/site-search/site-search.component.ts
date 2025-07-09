@@ -10,10 +10,11 @@ import {MatSelectModule} from "@angular/material/select";
 import {MatToolbarModule} from "@angular/material/toolbar";
 import {FormsModule} from "@angular/forms";
 import {NgForOf} from "@angular/common";
+import {FirebaseService} from "../../services/firebase.service";
 
 // Interface for site data
 export interface Site {
-  id: number;
+  id: string;
   name: string;
   type: string;
   county: string;
@@ -61,43 +62,20 @@ export class SiteSearchComponent implements OnInit {
     ];
     selectedView = 'all';
 
-    // Sample data
-    sites: Site[] = [
-      {id: 1, name: 'Duna Raktárbázis', type: 'Raktár', county: 'Pest', settlement: 'Budapest', size: 1500},
-      {id: 2, name: 'Hajdú Business Center', type: 'Iroda', county: 'Hajdú-Bihar', settlement: 'Debrecen', size: 800},
-      {id: 3, name: 'Avas Ipari Park', type: 'Gyártóüzem', county: 'Borsod-Abaúj-Zemplén', settlement: 'Miskolc', size: 3000},
-      {id: 4, name: 'Mecsek Logisztika', type: 'Raktár', county: 'Baranya', settlement: 'Pécs', size: 1200},
-      {id: 5, name: 'Tisza Cargo Center', type: 'Logisztikai központ', county: 'Csongrád-Csanád', settlement: 'Szeged', size: 2500},
-      {id: 6, name: 'Rába Raktár Komplexum', type: 'Raktár', county: 'Győr-Moson-Sopron', settlement: 'Győr', size: 1800},
-      {id: 7, name: 'Savaria Irodaház', type: 'Iroda', county: 'Vas', settlement: 'Szombathely', size: 650},
-      {id: 8, name: 'Zala Ipari Centrum', type: 'Gyártóüzem', county: 'Zala', settlement: 'Zalaegerszeg', size: 2800},
-      {id: 9, name: 'Kapos Logisztikai Park', type: 'Logisztikai központ', county: 'Somogy', settlement: 'Kaposvár', size: 2200},
-      {id: 10, name: 'Gemenc Raktárbázis', type: 'Raktár', county: 'Tolna', settlement: 'Szekszárd', size: 1100},
-      {id: 11, name: 'Korona Üzletközpont', type: 'Iroda', county: 'Fejér', settlement: 'Székesfehérvár', size: 750},
-      {id: 12, name: 'Bakony Ipari Park', type: 'Gyártóüzem', county: 'Veszprém', settlement: 'Veszprém', size: 3200},
-      {id: 13, name: 'Turul Raktártelep', type: 'Raktár', county: 'Komárom-Esztergom', settlement: 'Tatabánya', size: 1400},
-      {id: 14, name: 'Érd-Parkváros Logisztikai Központ', type: 'Logisztikai központ', county: 'Pest', settlement: 'Érd', size: 2100},
-      {id: 15, name: 'Karancs Irodaház', type: 'Iroda', county: 'Nógrád', settlement: 'Salgótarján', size: 600},
-      {id: 16, name: 'Dobó Ipari Centrum', type: 'Gyártóüzem', county: 'Heves', settlement: 'Eger', size: 2900},
-      {id: 17, name: 'Tisza-parti Raktárbázis', type: 'Raktár', county: 'Jász-Nagykun-Szolnok', settlement: 'Szolnok', size: 1300},
-      {id: 18, name: 'Munkácsy Business Center', type: 'Iroda', county: 'Békés', settlement: 'Békéscsaba', size: 720},
-      {id: 19, name: 'Hírös Logisztikai Park', type: 'Logisztikai központ', county: 'Bács-Kiskun', settlement: 'Kecskemét', size: 2400},
-      {id: 20, name: 'Nyírség Ipari Centrum', type: 'Gyártóüzem', county: 'Szabolcs-Szatmár-Bereg', settlement: 'Nyíregyháza', size: 3100},
-      {id: 21, name: 'Grassalkovich Raktárbázis', type: 'Raktár', county: 'Pest', settlement: 'Gödöllő', size: 1250},
-      {id: 22, name: 'Dunakanyar Irodaház', type: 'Iroda', county: 'Pest', settlement: 'Szentendre', size: 580},
-      {id: 23, name: 'Hajdúsági Ipari Park', type: 'Gyártóüzem', county: 'Hajdú-Bihar', settlement: 'Hajdúszoboszló', size: 2700},
-      {id: 24, name: 'Hódtó Raktárkomplexum', type: 'Raktár', county: 'Csongrád-Csanád', settlement: 'Hódmezővásárhely', size: 1350},
-      {id: 25, name: 'Duna-Dráva Logisztikai Központ', type: 'Logisztikai központ', county: 'Baranya', settlement: 'Mohács', size: 2300},
-      {id: 26, name: 'BorsodChem Irodaház', type: 'Iroda', county: 'Borsod-Abaúj-Zemplén', settlement: 'Kazincbarcika', size: 680},
-      {id: 27, name: 'Lővér Ipari Park', type: 'Gyártóüzem', county: 'Győr-Moson-Sopron', settlement: 'Sopron', size: 2950},
-    ];
+    // Sites data
+    sites: Site[] = [];
+
+    // Loading indicator
+    loading = false;
 
     @ViewChild(MatPaginator) paginator!: MatPaginator;
     @ViewChild(MatSort) sort!: MatSort;
 
+    constructor(private firebaseService: FirebaseService) {}
+
     ngOnInit(): void {
-      // Initialize the data source
-      this.dataSource.data = this.sites;
+      // Load sites from Firebase
+      this.loadSites();
 
       // Set up filter predicate to search by name
       this.dataSource.filterPredicate = (data: Site, filter: string) => {
@@ -147,26 +125,68 @@ export class SiteSearchComponent implements OnInit {
     }
 
     // Action methods
-    editSite(site: Site): void {
+    async editSite(site: Site): Promise<void> {
       console.log('Edit site:', site);
-      // Implement edit functionality
+      try {
+        // In a real application, you would open a dialog to edit the site
+        // For now, we'll just update a field to demonstrate Firebase update
+        const updatedData = {
+          name: `${site.name} (Updated)`,
+          lastUpdated: new Date().toISOString()
+        };
+
+        await this.firebaseService.updateDocument('sites', site.id, updatedData);
+        console.log('Site updated in Firebase');
+        // Reload sites to reflect changes
+        await this.loadSites();
+      } catch (error) {
+        console.error('Error updating site:', error);
+      }
     }
 
-    deleteSite(site: Site): void {
+    async deleteSite(site: Site): Promise<void> {
       console.log('Delete site:', site);
-      // Implement delete functionality
+      try {
+        // In a real application, you would show a confirmation dialog
+        if (confirm(`Are you sure you want to delete ${site.name}?`)) {
+          await this.firebaseService.deleteDocument('sites', site.id);
+          console.log('Site deleted from Firebase');
+          // Reload sites to reflect changes
+          await this.loadSites();
+        }
+      } catch (error) {
+        console.error('Error deleting site:', error);
+      }
     }
 
     viewSite(site: Site): void {
       console.log('View site:', site);
-      // Implement view functionality
+      // In a real application, you would navigate to a detail view
+      alert(`Viewing details for: ${site.name}`);
     }
 
     // Create new site
-    createNewSite(): void {
+    async createNewSite(): Promise<void> {
       console.log('Create new site');
-      // Implement new site creation functionality
-      // This would typically open a dialog or navigate to a form
+      try {
+        // In a real application, you would open a dialog to create a new site
+        // For now, we'll create a sample site to demonstrate Firebase create
+        const newSite = {
+          name: `New Site ${new Date().getTime()}`,
+          type: 'Raktár',
+          county: 'Budapest',
+          settlement: 'Budapest',
+          size: 1000,
+          createdAt: new Date().toISOString()
+        };
+
+        const newSiteId = await this.firebaseService.addDocument('sites', newSite);
+        console.log('New site created in Firebase with ID:', newSiteId);
+        // Reload sites to reflect changes
+        await this.loadSites();
+      } catch (error) {
+        console.error('Error creating new site:', error);
+      }
     }
 
     // Export to Excel
@@ -175,5 +195,43 @@ export class SiteSearchComponent implements OnInit {
       // Implement Excel export functionality
       // This would typically generate an Excel file with the current data
       alert('Excel export functionality would be implemented here');
+    }
+
+    // Load sites from Firebase
+    async loadSites(): Promise<void> {
+      try {
+        this.loading = true;
+        this.sites = await this.firebaseService.getCollection('sites') as Site[];
+        this.dataSource.data = this.sites;
+        console.log('Sites loaded from Firebase:', this.sites);
+      } catch (error) {
+        console.error('Error loading sites:', error);
+        // If no data exists yet, initialize with sample data
+        if (this.sites.length === 0) {
+          this.initializeSampleData();
+        }
+      } finally {
+        this.loading = false;
+      }
+    }
+
+    // Initialize sample data in Firebase if no data exists
+    async initializeSampleData(): Promise<void> {
+      const sampleSites = [
+        {name: 'Duna Raktárbázis', type: 'Raktár', county: 'Pest', settlement: 'Budapest', size: 1500},
+        {name: 'Hajdú Business Center', type: 'Iroda', county: 'Hajdú-Bihar', settlement: 'Debrecen', size: 800},
+        {name: 'Avas Ipari Park', type: 'Gyártóüzem', county: 'Borsod-Abaúj-Zemplén', settlement: 'Miskolc', size: 3000}
+      ];
+
+      try {
+        for (const site of sampleSites) {
+          await this.firebaseService.addDocument('sites', site);
+        }
+        console.log('Sample data initialized in Firebase');
+        // Reload sites after initialization
+        await this.loadSites();
+      } catch (error) {
+        console.error('Error initializing sample data:', error);
+      }
     }
 }
