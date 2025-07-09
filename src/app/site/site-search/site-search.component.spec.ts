@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { KeresoComponent } from './kereso.component';
+import { SiteSearchComponent } from './site-search.component';
 
-describe('KeresoComponent', () => {
-  let component: KeresoComponent;
-  let fixture: ComponentFixture<KeresoComponent>;
+describe('SiteSearchComponent', () => {
+  let component: SiteSearchComponent;
+  let fixture: ComponentFixture<SiteSearchComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [KeresoComponent]
+      imports: [SiteSearchComponent]
     })
     .compileComponents();
     
-    fixture = TestBed.createComponent(KeresoComponent);
+    fixture = TestBed.createComponent(SiteSearchComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
