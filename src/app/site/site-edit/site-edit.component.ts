@@ -9,7 +9,7 @@ import {MatSelectModule} from '@angular/material/select';
 import {MatCardModule} from '@angular/material/card';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {CommonModule} from '@angular/common';
-import {finalize, tap} from 'rxjs';
+import {finalize, tap, first} from 'rxjs';
 
 @Component({
   selector: 'app-site-edit',
@@ -80,6 +80,7 @@ export class SiteEditComponent implements OnInit {
     this.loading = true;
     this.dataService.getCollection('sites')
       .pipe(
+        first(),
         tap(sites => {
           const site = sites.find(s => s.id === this.siteId);
           if (site) {

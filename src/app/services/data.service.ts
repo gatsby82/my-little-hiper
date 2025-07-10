@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, catchError, map, of, tap } from 'rxjs';
-import { Site } from '../site/interfaces/site.interface';
+import {Injectable} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {BehaviorSubject, Observable, catchError, map, of, tap} from 'rxjs';
+import {Site} from '../site/interfaces/site.interface';
 
 // Define an interface for backward compatibility with existing code
 export interface SiteView {
@@ -18,6 +18,7 @@ export interface SiteView {
   postalCode?: string;
   migrated?: boolean;
   notes?: string;
+
   [key: string]: any;
 }
 
@@ -26,11 +27,10 @@ export interface SiteView {
 })
 export class DataService {
   private sitesSubject = new BehaviorSubject<SiteView[]>([]);
-  private sitesLoaded = false;
-  private nextId = 1;
-
   // Expose sites as an Observable
   public sites$: Observable<SiteView[]> = this.sitesSubject.asObservable();
+  private sitesLoaded = false;
+  private nextId = 1;
 
   constructor(private http: HttpClient) {
     // Initialize data on service creation
@@ -47,63 +47,61 @@ export class DataService {
 
     this.http.get<any>('assets/data/sites.json').pipe(
       map(sitesData => {
+
         // Map the data from the JSON format to the Site interface and then to SiteView
         return sitesData.sites.map((siteData: any) => {
-          // First create a Site object with the new interface
-
-          console.log(siteData);
-
+          // Create a Site object from the JSON data
           const site: Site = {
-            id: parseInt(siteData.AZONOSITO) || this.getNextId(),
-            inaktiv: false,
-            inaktivMagyarazat: '',
-            letrehozo: '',
-            letrehozva: new Date(),
-            modosito: '',
-            modositva: new Date(),
-            torolt: false,
-            megnevezes: siteData.MEGNEVEZES,
-            megnevezesAngol: siteData.MEGNEVEZES_ANGOL,
-            azonosito: siteData.AZONOSITO || `SITE-${this.getNextId()}`,
-            tipus_nev: siteData.TIPUS,
-            regio_nev: siteData.REGIO,
-            megye_nev: siteData.VARMEGYE,
-            telepules_nev: siteData.TELEPULES,
-            korzet_nev: '',
-            irsz: siteData.IRSZ,
-            utca: '',
-            migralt: siteData.MIGRALT,
-            migraltLetrehozva: new Date(),
-            meret: siteData.MERET,
-            megjegyzes: siteData.MEGJEGYZES,
-            bpTav: 0,
-            iparVaganyVan: false,
-            aram: 0,
-            gaz: 0,
-            viz: 0,
-            ipariviz: 0,
-            szennyviz: 0,
-            birtokne: '',
-            allapot_nev: '',
-            kijajanlhato: 0,
-            egyeb: '',
-            epuletVan: false,
-            terkepLink: '',
-            gpsSzelesseg: 0,
-            gpsHosszusag: 0,
-            csarnok: [],
-            iroda: [],
-            zoldmezo: [],
-            kapcsolattartok: [],
-            dokumentumok: [],
-            telephelyReszletek: [],
-            helyrajziSzamok: [],
-            autoPalya: [],
-            vasutallomas: [],
-            folyamikiKikoto: [],
-            autobusmegallo: [],
-            lakoterulet: [],
-            fout: []
+            id: siteData.id,
+            inaktiv: siteData.inaktiv || false,
+            inaktivMagyarazat: siteData.inaktivMagyarazat || '',
+            letrehozo: siteData.letrehozo || '',
+            letrehozva: new Date(siteData.letrehozva),
+            modosito: siteData.modosito || '',
+            modositva: new Date(siteData.modositva),
+            torolt: siteData.torolt || false,
+            megnevezes: siteData.megnevezes,
+            megnevezesAngol: siteData.megnevezesAngol || '',
+            azonosito: siteData.azonosito,
+            tipus_nev: siteData.tipus_nev,
+            regio_nev: siteData.regio_nev || '',
+            megye_nev: siteData.megye_nev,
+            telepules_nev: siteData.telepules_nev,
+            korzet_nev: siteData.korzet_nev || '',
+            irsz: siteData.irsz || '',
+            utca: siteData.utca || '',
+            migralt: siteData.migralt || false,
+            migraltLetrehozva: siteData.migraltLetrehozva ? new Date(siteData.migraltLetrehozva) : new Date(),
+            meret: siteData.meret || 0,
+            megjegyzes: siteData.megjegyzes || '',
+            bpTav: siteData.bpTav || 0,
+            iparVaganyVan: siteData.iparVaganyVan || false,
+            aram: siteData.aram || 0,
+            gaz: siteData.gaz || 0,
+            viz: siteData.viz || 0,
+            ipariviz: siteData.ipariviz || 0,
+            szennyviz: siteData.szennyviz || 0,
+            birtokne: siteData.birtokne || '',
+            allapot_nev: siteData.allapot_nev || '',
+            kiajanlhato: siteData.kijajanlhato || 0,
+            egyeb: siteData.egyeb || '',
+            epuletVan: siteData.epuletVan || false,
+            terkepLink: siteData.terkepLink || '',
+            gpsSzelesseg: siteData.gpsSzelesseg || 0,
+            gpsHosszusag: siteData.gpsHosszusag || 0,
+            csarnok: siteData.csarnok,
+            iroda: siteData.iroda,
+            zoldmezo: siteData.zoldmezo,
+            kapcsolattartok: siteData.kapcsolattartok || [],
+            dokumentumok: siteData.dokumentumok || [],
+            telephelyReszletek: siteData.telephelyReszletek || [],
+            helyrajziSzamok: siteData.helyrajziSzamok || [],
+            autoPalya: siteData.autoPalya,
+            vasutallomas: siteData.vasutallomas,
+            folyamiKikoto: siteData.folyamikiKikoto,
+            autobuszmegallo: siteData.autobusmegallo,
+            lakoterulet: siteData.lakoterulet,
+            fout: siteData.fout
           };
 
           // Then convert to SiteView for backward compatibility
@@ -188,25 +186,25 @@ export class DataService {
       szennyviz: 0,
       birtokne: '',
       allapot_nev: '',
-      kijajanlhato: 0,
+      kiajanlhato: 0,
       egyeb: '',
       epuletVan: false,
       terkepLink: '',
       gpsSzelesseg: 0,
       gpsHosszusag: 0,
-      csarnok: [],
-      iroda: [],
-      zoldmezo: [],
+      csarnok: undefined,
+      iroda: undefined,
+      zoldmezo: undefined,
       kapcsolattartok: [],
       dokumentumok: [],
       telephelyReszletek: [],
       helyrajziSzamok: [],
-      autoPalya: [],
-      vasutallomas: [],
-      folyamikiKikoto: [],
-      autobusmegallo: [],
-      lakoterulet: [],
-      fout: []
+      autoPalya: undefined,
+      vasutallomas: undefined,
+      folyamiKikoto: undefined,
+      autobuszmegallo: undefined,
+      lakoterulet: undefined,
+      fout: undefined
     };
 
     // Convert to SiteView for backward compatibility
@@ -289,6 +287,8 @@ export class DataService {
    * Convert a Site object to a SiteView object for backward compatibility
    */
   private siteToSiteView(site: Site): SiteView {
+    console.log(site);
+
     return {
       id: site.azonosito,
       name: site.megnevezes,

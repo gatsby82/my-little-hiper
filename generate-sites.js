@@ -40,19 +40,19 @@ const siteTemplate = {
   terkepLink: "",
   gpsSzelesseg: 0,
   gpsHosszusag: 0,
-  csarnok: [],
-  iroda: [],
-  zoldmezo: [],
+  csarnok: undefined,
+  iroda: undefined,
+  zoldmezo: undefined,
   kapcsolattartok: [],
   dokumentumok: [],
   telephelyReszletek: [],
   helyrajziSzamok: [],
-  autoPalya: [],
-  vasutallomas: [],
-  folyamikiKikoto: [],
-  autobusmegallo: [],
-  lakoterulet: [],
-  fout: []
+  autoPalya: undefined,
+  vasutallomas: undefined,
+  folyamikiKikoto: undefined,
+  autobusmegallo: undefined,
+  lakoterulet: undefined,
+  fout: undefined
 };
 
 // Data for generating sites
@@ -114,12 +114,14 @@ function generateSite(id) {
 
 // Add connected entities to a site
 function addConnectedEntities(site, siteId) {
-  // Add csarnok - always add at least one for fully populated sites
-  const csarnokCount = 2; // Always add 2 csarnok for full population
-  for (let i = 0; i < csarnokCount; i++) {
-    const csarnokId = siteId * 10 + i;
-    const csarnok = {
-      id: csarnokId,
+  // Determine the type of site based on siteId
+  // siteId % 3 = 0: Csarnok, siteId % 3 = 1: Iroda, siteId % 3 = 2: Zoldmezo
+  const siteType = siteId % 3;
+
+  if (siteType === 0) {
+    // Add csarnok
+    site.csarnok = {
+      id: siteId * 10,
       letrehozo: "admin",
       letrehozva: "2023-01-01T08:00:00Z",
       modosito: "admin",
@@ -174,7 +176,7 @@ function addConnectedEntities(site, siteId) {
     // Add csarnokTeruletek - always add 3 for fully populated
     const teruletCount = 3;
     for (let j = 0; j < teruletCount; j++) {
-      const teruletId = csarnokId * 10 + j;
+      const teruletId = site.csarnok.id * 10 + j;
       const terulet = {
         id: teruletId,
         letrehozo: "admin",
@@ -182,32 +184,26 @@ function addConnectedEntities(site, siteId) {
         modosito: "admin",
         modositva: "2023-01-01T08:00:00Z",
         torolt: false,
-        csarnok_id: csarnokId,
+        csarnok_id: site.csarnok.id,
         sorszam: j + 1,
         tipus_nev: j === 0 ? (site.tipus_nev === "Raktár" ? "Raktár" : "Gyártócsarnok") : (j === 1 ? "Iroda" : "Közös helyiség"),
-        meret: j === 0 ? (site.tipus_nev === "Raktár" ? csarnok.raktarMeret : csarnok.gyartoCsarnokMeret) : (j === 1 ? 200 : csarnok.kozosHelyMeret),
-        belmagassagTol: j === 0 ? csarnok.belmagassagTol : 3,
-        belmagassagIg: j === 0 ? csarnok.belmagassagIg : 3
+        meret: j === 0 ? (site.tipus_nev === "Raktár" ? site.csarnok.raktarMeret : site.csarnok.gyartoCsarnokMeret) : (j === 1 ? 200 : site.csarnok.kozosHelyMeret),
+        belmagassagTol: j === 0 ? site.csarnok.belmagassagTol : 3,
+        belmagassagIg: j === 0 ? site.csarnok.belmagassagIg : 3
       };
-      csarnok.csarnokTeruletek.push(terulet);
+      site.csarnok.csarnokTeruletek.push(terulet);
     }
-
-    site.csarnok.push(csarnok);
-  }
-
-  // Add iroda - always add at least 2 for fully populated sites
-  const irodaCount = 2;
-  for (let i = 0; i < irodaCount; i++) {
-    const irodaId = siteId * 10 + i;
-    const iroda = {
-      id: irodaId,
+  } else if (siteType === 1) {
+    // Add iroda
+    site.iroda = {
+      id: siteId * 10,
       letrehozo: "admin",
       letrehozva: "2023-01-01T08:00:00Z",
       modosito: "admin",
       modositva: "2023-01-01T08:00:00Z",
       torolt: false,
       telephely_id: siteId,
-      nev: `${site.megnevezes} Iroda ${i + 1}`,
+      nev: `${site.megnevezes} Iroda`,
       besorolas_nev: Math.random() > 0.5 ? "A+ kategória" : "A kategória",
       elhelyezkedes: Math.random() > 0.5 ? "Földszint" : `${Math.floor(1 + Math.random() * 5)}. emelet`,
       teljesTerulet: Math.floor(100 + Math.random() * 900),
@@ -227,47 +223,44 @@ function addConnectedEntities(site, siteId) {
       uzemidijEur: Math.floor(2 + Math.random() * 4),
       kozosSzintTermut: Math.floor(20 + Math.random() * 100)
     };
-    site.iroda.push(iroda);
+  } else {
+    // Add zoldmezo
+    site.zoldmezo = {
+      id: siteId * 10,
+      letrehozo: "admin",
+      letrehozva: "2023-01-01T08:00:00Z",
+      modosito: "admin",
+      modositva: "2023-01-01T08:00:00Z",
+      torolt: false,
+      telephely_id: siteId,
+      oszthato: Math.random() > 0.5,
+      legkisebbTerulet: Math.floor(500 + Math.random() * 1500),
+      bovithetoTerulet: Math.floor(1000 + Math.random() * 5000),
+      meret: `${Math.floor(5000 + Math.random() * 20000)} m²`,
+      maxBeepitheto: Math.floor(30 + Math.random() * 40),
+      minZoldterulet: Math.floor(20 + Math.random() * 30),
+      maxEpuletMagassag: Math.floor(10 + Math.random() * 20),
+      besorolas_nev: "Ipari terület",
+      tulForma_nev: site.birtokne,
+      erdoVan: Math.random() > 0.5,
+      loszerMentKell: Math.random() > 0.5,
+      karMentKell: Math.random() > 0.5,
+      bontasKell: Math.random() > 0.5,
+      vezetekAtmegy: Math.random() > 0.5,
+      vezetekAthelyezheto: Math.random() > 0.5,
+      palyazatiErintettseg: Math.random() > 0.5,
+      regeszetiErintettseg: Math.random() > 0.5,
+      geodeziaVan_nev: Math.random() > 0.5 ? "Van" : "Nincs",
+      kornyHatVizsgaVan_nev: Math.random() > 0.5 ? "Van" : "Nincs",
+      lejtes_nev: Math.random() > 0.7 ? "Sík" : "Enyhe lejtés",
+      iranyarEur: Math.floor(500000 + Math.random() * 1500000),
+      iranyarNmEurTol: Math.floor(20 + Math.random() * 30),
+      iranyarNmEurIg: Math.floor(50 + Math.random() * 50),
+      megujuloEnergia_nev: Math.random() > 0.5 ? "Napelem" : "Nincs",
+      jelenlegiHasznositas: "Ipari terület",
+      termVedErintettseg: Math.random() > 0.5 ? "Van" : "Nincs"
+    };
   }
-
-  // Add zoldmezo - always add one for fully populated
-  const zoldmezoId = siteId * 10;
-  const zoldmezo = {
-    id: zoldmezoId,
-    letrehozo: "admin",
-    letrehozva: "2023-01-01T08:00:00Z",
-    modosito: "admin",
-    modositva: "2023-01-01T08:00:00Z",
-    torolt: false,
-    telephely_id: siteId,
-    oszthato: Math.random() > 0.5,
-    legkisebbTerulet: Math.floor(500 + Math.random() * 1500),
-    bovithetoTerulet: Math.floor(1000 + Math.random() * 5000),
-    meret: `${Math.floor(5000 + Math.random() * 20000)} m²`,
-    maxBeepitheto: Math.floor(30 + Math.random() * 40),
-    minZoldterulet: Math.floor(20 + Math.random() * 30),
-    maxEpuletMagassag: Math.floor(10 + Math.random() * 20),
-    besorolas_nev: "Ipari terület",
-    tulForma_nev: site.birtokne,
-    erdoVan: Math.random() > 0.5,
-    loszerMentKell: Math.random() > 0.5,
-    karMentKell: Math.random() > 0.5,
-    bontasKell: Math.random() > 0.5,
-    vezetekAtmegy: Math.random() > 0.5,
-    vezetekAthelyezheto: Math.random() > 0.5,
-    palyazatiErintettseg: Math.random() > 0.5,
-    regeszetiErintettseg: Math.random() > 0.5,
-    geodeziaVan_nev: Math.random() > 0.5 ? "Van" : "Nincs",
-    kornyHatVizsgaVan_nev: Math.random() > 0.5 ? "Van" : "Nincs",
-    lejtes_nev: Math.random() > 0.7 ? "Sík" : "Enyhe lejtés",
-    iranyarEur: Math.floor(500000 + Math.random() * 1500000),
-    iranyarNmEurTol: Math.floor(20 + Math.random() * 30),
-    iranyarNmEurIg: Math.floor(50 + Math.random() * 50),
-    megujuloEnergia_nev: Math.random() > 0.5 ? "Napelem" : "Nincs",
-    jelenlegiHasznositas: "Ipari terület",
-    termVedErintettseg: Math.random() > 0.5 ? "Van" : "Nincs"
-  };
-  site.zoldmezo.push(zoldmezo);
 
   // Add kapcsolattartok - always add 2 for fully populated
   const kapcsolattartoCount = 2;
@@ -367,51 +360,43 @@ function addConnectedEntities(site, siteId) {
     site.helyrajziSzamok.push(hrsz);
   }
 
-  // Add autoPalya - always add 2 for fully populated
-  const autopalyaCount = 2;
-  for (let i = 0; i < autopalyaCount; i++) {
-    const autopalyaId = siteId * 100 + i;
-    const autopalya = {
-      id: autopalyaId,
-      letrehozo: "admin",
-      letrehozva: "2023-01-01T08:00:00Z",
-      modosito: "admin",
-      modositva: "2023-01-01T08:00:00Z",
-      torolt: false,
-      telephely_id: siteId,
-      sorszam: i + 1,
-      tipus_nev: "Autópálya",
-      nev: `M${Math.floor(1 + Math.random() * 7)}`,
-      tav: Math.floor(1 + Math.random() * 20),
-      ido: Math.floor(5 + Math.random() * 25)
-    };
-    site.autoPalya.push(autopalya);
-  }
+  // Add autoPalya - now a single field
+  const autopalyaId = siteId * 100;
+  site.autoPalya = {
+    id: autopalyaId,
+    letrehozo: "admin",
+    letrehozva: "2023-01-01T08:00:00Z",
+    modosito: "admin",
+    modositva: "2023-01-01T08:00:00Z",
+    torolt: false,
+    telephely_id: siteId,
+    sorszam: 1,
+    tipus_nev: "Autópálya",
+    nev: `M${Math.floor(1 + Math.random() * 7)}`,
+    tav: Math.floor(1 + Math.random() * 20),
+    ido: Math.floor(5 + Math.random() * 25)
+  };
 
-  // Add vasutallomas - always add 1 for fully populated
-  const vasutCount = 1;
-  for (let i = 0; i < vasutCount; i++) {
-    const vasutId = siteId * 100 + 10 + i;
-    const vasut = {
-      id: vasutId,
-      letrehozo: "admin",
-      letrehozva: "2023-01-01T08:00:00Z",
-      modosito: "admin",
-      modositva: "2023-01-01T08:00:00Z",
-      torolt: false,
-      telephely_id: siteId,
-      sorszam: i + 1,
-      tipus_nev: "Vasútállomás",
-      nev: `${site.telepules_nev} vasútállomás`,
-      tav: Math.floor(1 + Math.random() * 10),
-      ido: Math.floor(5 + Math.random() * 20)
-    };
-    site.vasutallomas.push(vasut);
-  }
+  // Add vasutallomas - now a single field
+  const vasutId = siteId * 100 + 10;
+  site.vasutallomas = {
+    id: vasutId,
+    letrehozo: "admin",
+    letrehozva: "2023-01-01T08:00:00Z",
+    modosito: "admin",
+    modositva: "2023-01-01T08:00:00Z",
+    torolt: false,
+    telephely_id: siteId,
+    sorszam: 1,
+    tipus_nev: "Vasútállomás",
+    nev: `${site.telepules_nev} vasútállomás`,
+    tav: Math.floor(1 + Math.random() * 10),
+    ido: Math.floor(5 + Math.random() * 20)
+  };
 
-  // Add folyamikiKikoto - always add 1 for fully populated
+  // Add folyamikiKikoto - now a single field
   const kikotoId = siteId * 100 + 20;
-  const kikoto = {
+  site.folyamikiKikoto = {
     id: kikotoId,
     letrehozo: "admin",
     letrehozva: "2023-01-01T08:00:00Z",
@@ -425,70 +410,57 @@ function addConnectedEntities(site, siteId) {
     tav: Math.floor(1 + Math.random() * 15),
     ido: Math.floor(5 + Math.random() * 30)
   };
-  site.folyamikiKikoto.push(kikoto);
 
-  // Add autobusmegallo - always add 1 for fully populated
-  const buszCount = 1;
-  for (let i = 0; i < buszCount; i++) {
-    const buszId = siteId * 100 + 30 + i;
-    const busz = {
-      id: buszId,
-      letrehozo: "admin",
-      letrehozva: "2023-01-01T08:00:00Z",
-      modosito: "admin",
-      modositva: "2023-01-01T08:00:00Z",
-      torolt: false,
-      telephely_id: siteId,
-      sorszam: i + 1,
-      tipus_nev: "Autóbuszmegálló",
-      nev: `${site.utca.split('.')[0]} megálló`,
-      tav: Math.random() * 0.5,
-      ido: Math.floor(1 + Math.random() * 5)
-    };
-    site.autobusmegallo.push(busz);
-  }
+  // Add autobusmegallo - now a single field
+  const buszId = siteId * 100 + 30;
+  site.autobusmegallo = {
+    id: buszId,
+    letrehozo: "admin",
+    letrehozva: "2023-01-01T08:00:00Z",
+    modosito: "admin",
+    modositva: "2023-01-01T08:00:00Z",
+    torolt: false,
+    telephely_id: siteId,
+    sorszam: 1,
+    tipus_nev: "Autóbuszmegálló",
+    nev: `${site.utca.split('.')[0]} megálló`,
+    tav: Math.random() * 0.5,
+    ido: Math.floor(1 + Math.random() * 5)
+  };
 
-  // Add lakoterulet - always add 1 for fully populated
-  const lakoCount = 1;
-  for (let i = 0; i < lakoCount; i++) {
-    const lakoId = siteId * 100 + 40 + i;
-    const lako = {
-      id: lakoId,
-      letrehozo: "admin",
-      letrehozva: "2023-01-01T08:00:00Z",
-      modosito: "admin",
-      modositva: "2023-01-01T08:00:00Z",
-      torolt: false,
-      telephely_id: siteId,
-      sorszam: i + 1,
-      tipus_nev: "Lakóterület",
-      nev: site.korzet_nev,
-      tav: Math.floor(Math.random() * 3),
-      ido: Math.floor(1 + Math.random() * 10)
-    };
-    site.lakoterulet.push(lako);
-  }
+  // Add lakoterulet - now a single field
+  const lakoId = siteId * 100 + 40;
+  site.lakoterulet = {
+    id: lakoId,
+    letrehozo: "admin",
+    letrehozva: "2023-01-01T08:00:00Z",
+    modosito: "admin",
+    modositva: "2023-01-01T08:00:00Z",
+    torolt: false,
+    telephely_id: siteId,
+    sorszam: 1,
+    tipus_nev: "Lakóterület",
+    nev: site.korzet_nev,
+    tav: Math.floor(Math.random() * 3),
+    ido: Math.floor(1 + Math.random() * 10)
+  };
 
-  // Add fout - always add 1 for fully populated
-  const foutCount = 1;
-  for (let i = 0; i < foutCount; i++) {
-    const foutId = siteId * 100 + 50 + i;
-    const fout = {
-      id: foutId,
-      letrehozo: "admin",
-      letrehozva: "2023-01-01T08:00:00Z",
-      modosito: "admin",
-      modositva: "2023-01-01T08:00:00Z",
-      torolt: false,
-      telephely_id: siteId,
-      sorszam: i + 1,
-      tipus_nev: "Főút",
-      nev: `${Math.floor(1 + Math.random() * 8)}-es főút`,
-      tav: Math.floor(Math.random() * 5),
-      ido: Math.floor(1 + Math.random() * 10)
-    };
-    site.fout.push(fout);
-  }
+  // Add fout - now a single field
+  const foutId = siteId * 100 + 50;
+  site.fout = {
+    id: foutId,
+    letrehozo: "admin",
+    letrehozva: "2023-01-01T08:00:00Z",
+    modosito: "admin",
+    modositva: "2023-01-01T08:00:00Z",
+    torolt: false,
+    telephely_id: siteId,
+    sorszam: 1,
+    tipus_nev: "Főút",
+    nev: `${Math.floor(1 + Math.random() * 8)}-es főút`,
+    tav: Math.floor(Math.random() * 5),
+    ido: Math.floor(1 + Math.random() * 10)
+  };
 }
 
 // Generate 7 fully populated sites
