@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { FirebaseService } from './firebase.service';
+import { DataService, Site } from './data.service';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { Observable, concatMap, forkJoin, from, map, of, switchMap, tap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -12,45 +12,50 @@ export class MockDataService {
   private settlements: { [county: string]: string[] } = {};
   private prefixes = ['Északi', 'Déli', 'Keleti', 'Nyugati', 'Központi', 'Városi', 'Regionális', 'Nemzetközi', 'Modern', 'Új'];
   private suffixes = ['Raktárbázis', 'Ipari Park', 'Logisztikai Központ', 'Irodaház', 'Üzletközpont', 'Ipari Centrum', 'Cargo Center', 'Business Center', 'Raktárkomplexum', 'Raktártelep'];
+  private initialized = false;
 
   constructor(
-    private firebaseService: FirebaseService,
+    private dataService: DataService,
     private http: HttpClient
   ) {}
 
   /**
    * Initialize the mock data service by loading counties and settlements from the sites.json file
    */
-  async initialize(): Promise<void> {
-    try {
-      const sitesData = await firstValueFrom(this.http.get<any>('assets/data/sites.json'));
-
-      // Extract unique counties and their settlements
-      const countyMap = new Map<string, Set<string>>();
-
-      sitesData.sites.forEach((site: any) => {
-        const county = site.VARMEGYE;
-        const settlement = site.TELEPULES;
-
-        if (!countyMap.has(county)) {
-          countyMap.set(county, new Set<string>());
-        }
-
-        countyMap.get(county)?.add(settlement);
-      });
-
-      // Convert to arrays
-      this.counties = Array.from(countyMap.keys());
-
-      countyMap.forEach((settlements, county) => {
-        this.settlements[county] = Array.from(settlements);
-      });
-
-      console.log('Mock data service initialized with', this.counties.length, 'counties and',
-        Object.values(this.settlements).reduce((sum, arr) => sum + arr.length, 0), 'settlements');
-    } catch (error) {
-      console.error('Error initializing mock data service:', error);
+  initialize(): Observable<void> {
+    if (this.initialized) {
+      return of(void 0);
     }
+
+    return this.http.get<any>('assets/data/sites.json').pipe(
+      map(sitesData => {
+        // Extract unique counties and their settlements
+        const countyMap = new Map<string, Set<string>>();
+
+        sitesData.sites.forEach((site: any) => {
+          const county = site.VARMEGYE;
+          const settlement = site.TELEPULES;
+
+          if (!countyMap.has(county)) {
+            countyMap.set(county, new Set<string>());
+          }
+
+          countyMap.get(county)?.add(settlement);
+        });
+
+        // Convert to arrays
+        this.counties = Array.from(countyMap.keys());
+
+        countyMap.forEach((settlements, county) => {
+          this.settlements[county] = Array.from(settlements);
+        });
+
+        this.initialized = true;
+        console.log('Mock data service initialized with', this.counties.length, 'counties and',
+          Object.values(this.settlements).reduce((sum, arr) => sum + arr.length, 0), 'settlements');
+      }),
+      map(() => void 0)
+    );
   }
 
   /**
@@ -121,49 +126,71 @@ export class MockDataService {
   }
 
   /**
-   * Populate the Firebase database with random sites
+   * Populate the database with random sites
    */
-  async populateDatabase(count: number = 20): Promise<void> {
-    try {
-      // Initialize the service if not already initialized
-      if (this.counties.length === 0) {
-        await this.initialize();
-      }
+  populateDatabase(count: number = 20): Observable<void> {
+    // Initialize the service if not already initialized
+    return this.initialize().pipe(
+      switchMap(() => {
+        console.log(`Generating ${count} random sites...`);
+        const sites = this.generateRandomSites(count);
 
-      console.log(`Generating ${count} random sites...`);
-      const sites = this.generateRandomSites(count);
-
-      console.log('Adding sites to Firebase...');
-      for (const site of sites) {
-        await this.firebaseService.addDocument('sites', site);
-      }
-
-      console.log(`Successfully added ${count} random sites to Firebase.`);
-    } catch (error) {
-      console.error('Error populating database with random sites:', error);
-    }
+        console.log('Adding sites to data service...');
+        // Add sites one by one using concatMap to ensure they're added sequentially
+        return from(sites).pipe(
+          concatMap(site => this.dataService.addDocument('sites', site)),
+          tap(id => console.log(`Added site with ID: ${id}`)),
+          // Collect all results but we don't need them
+          toArray(),
+          map(() => {
+            console.log(`Successfully added ${count} random sites.`);
+            return void 0;
+          })
+        );
+      })
+    );
   }
 
   /**
    * Clear all sites from the database and populate with random data
    */
-  async resetAndPopulateDatabase(count: number = 20): Promise<void> {
-    try {
-      // Get all existing sites
-      const existingSites = await this.firebaseService.getCollection('sites');
+  resetAndPopulateDatabase(count: number = 20): Observable<void> {
+    return this.dataService.getCollection('sites').pipe(
+      switchMap(existingSites => {
+        console.log(`Deleting ${existingSites.length} existing sites...`);
 
-      // Delete all existing sites
-      console.log(`Deleting ${existingSites.length} existing sites...`);
-      for (const site of existingSites) {
-        await this.firebaseService.deleteDocument('sites', site.id);
-      }
+        if (existingSites.length === 0) {
+          return this.populateDatabase(count);
+        }
 
-      // Populate with new random sites
-      await this.populateDatabase(count);
-
-      console.log('Database reset and populated with random data.');
-    } catch (error) {
-      console.error('Error resetting and populating database:', error);
-    }
+        // Delete all existing sites using concatMap to ensure they're deleted sequentially
+        return from(existingSites).pipe(
+          concatMap(site => this.dataService.deleteDocument('sites', site.id)),
+          toArray(),
+          switchMap(() => this.populateDatabase(count)),
+          map(() => {
+            console.log('Database reset and populated with random data.');
+            return void 0;
+          })
+        );
+      })
+    );
   }
+}
+
+// Helper operator to collect all emissions into an array
+function toArray<T>() {
+  return (source: Observable<T>) => {
+    return new Observable<T[]>(subscriber => {
+      const values: T[] = [];
+      return source.subscribe({
+        next: value => values.push(value),
+        error: err => subscriber.error(err),
+        complete: () => {
+          subscriber.next(values);
+          subscriber.complete();
+        }
+      });
+    });
+  };
 }

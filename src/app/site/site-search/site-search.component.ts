@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {MatButton, MatIconButton} from "@angular/material/button";
 import {MatTableDataSource, MatTableModule} from "@angular/material/table";
 import {MatPaginator, MatPaginatorModule} from "@angular/material/paginator";
@@ -10,17 +10,10 @@ import {MatSelectModule} from "@angular/material/select";
 import {MatToolbarModule} from "@angular/material/toolbar";
 import {FormsModule} from "@angular/forms";
 import {NgForOf} from "@angular/common";
-import {FirebaseService} from "../../services/firebase.service";
+import {DataService, Site} from "../../services/data.service";
+import {Observable, Subscription, finalize, first, switchMap, tap} from "rxjs";
 
-// Interface for site data
-export interface Site {
-  id: string;
-  name: string;
-  type: string;
-  county: string;
-  settlement: string;
-  size: number;
-}
+// Site interface is now imported from data.service
 
 @Component({
   selector: 'app-site-search',
@@ -42,7 +35,7 @@ export interface Site {
   templateUrl: './site-search.component.html',
   styleUrl: './site-search.component.scss'
 })
-export class SiteSearchComponent implements OnInit {
+export class SiteSearchComponent implements OnInit, OnDestroy {
     // Define columns to display
     displayedColumns: string[] = ['name', 'type', 'county', 'settlement', 'size', 'actions'];
 
@@ -68,13 +61,16 @@ export class SiteSearchComponent implements OnInit {
     // Loading indicator
     loading = false;
 
+    // Subscriptions
+    private subscriptions = new Subscription();
+
     @ViewChild(MatPaginator) paginator!: MatPaginator;
     @ViewChild(MatSort) sort!: MatSort;
 
-    constructor(private firebaseService: FirebaseService) {}
+    constructor(private dataService: DataService) {}
 
     ngOnInit(): void {
-      // Load sites from Firebase
+      // Load sites from data service
       this.loadSites();
 
       // Set up filter predicate to search by name
@@ -115,6 +111,11 @@ export class SiteSearchComponent implements OnInit {
       this.dataSource.sort = this.sort;
     }
 
+    ngOnDestroy(): void {
+      // Clean up subscriptions
+      this.subscriptions.unsubscribe();
+    }
+
     // Apply filters when search text or view selection changes
     applyFilters(): void {
       this.dataSource.filter = this.searchText.trim().toLowerCase() + '|' + this.selectedView;
@@ -125,37 +126,55 @@ export class SiteSearchComponent implements OnInit {
     }
 
     // Action methods
-    async editSite(site: Site): Promise<void> {
+    editSite(site: Site): void {
       console.log('Edit site:', site);
-      try {
-        // In a real application, you would open a dialog to edit the site
-        // For now, we'll just update a field to demonstrate Firebase update
-        const updatedData = {
-          name: `${site.name} (Updated)`,
-          lastUpdated: new Date().toISOString()
-        };
 
-        await this.firebaseService.updateDocument('sites', site.id, updatedData);
-        console.log('Site updated in Firebase');
-        // Reload sites to reflect changes
-        await this.loadSites();
-      } catch (error) {
-        console.error('Error updating site:', error);
-      }
+      // In a real application, you would open a dialog to edit the site
+      // For now, we'll just update a field to demonstrate update
+      const updatedData = {
+        name: `${site.name} (Updated)`,
+        lastUpdated: new Date().toISOString()
+      };
+
+      this.loading = true;
+
+      const subscription = this.dataService.updateDocument('sites', site.id, updatedData)
+        .pipe(
+          tap(success => {
+            if (success) {
+              console.log('Site updated');
+            } else {
+              console.error('Failed to update site');
+            }
+          }),
+          finalize(() => this.loading = false)
+        )
+        .subscribe();
+
+      this.subscriptions.add(subscription);
     }
 
-    async deleteSite(site: Site): Promise<void> {
+    deleteSite(site: Site): void {
       console.log('Delete site:', site);
-      try {
-        // In a real application, you would show a confirmation dialog
-        if (confirm(`Are you sure you want to delete ${site.name}?`)) {
-          await this.firebaseService.deleteDocument('sites', site.id);
-          console.log('Site deleted from Firebase');
-          // Reload sites to reflect changes
-          await this.loadSites();
-        }
-      } catch (error) {
-        console.error('Error deleting site:', error);
+
+      // In a real application, you would show a confirmation dialog
+      if (confirm(`Are you sure you want to delete ${site.name}?`)) {
+        this.loading = true;
+
+        const subscription = this.dataService.deleteDocument('sites', site.id)
+          .pipe(
+            tap(success => {
+              if (success) {
+                console.log('Site deleted');
+              } else {
+                console.error('Failed to delete site');
+              }
+            }),
+            finalize(() => this.loading = false)
+          )
+          .subscribe();
+
+        this.subscriptions.add(subscription);
       }
     }
 
@@ -166,27 +185,32 @@ export class SiteSearchComponent implements OnInit {
     }
 
     // Create new site
-    async createNewSite(): Promise<void> {
+    createNewSite(): void {
       console.log('Create new site');
-      try {
-        // In a real application, you would open a dialog to create a new site
-        // For now, we'll create a sample site to demonstrate Firebase create
-        const newSite = {
-          name: `New Site ${new Date().getTime()}`,
-          type: 'Raktár',
-          county: 'Budapest',
-          settlement: 'Budapest',
-          size: 1000,
-          createdAt: new Date().toISOString()
-        };
 
-        const newSiteId = await this.firebaseService.addDocument('sites', newSite);
-        console.log('New site created in Firebase with ID:', newSiteId);
-        // Reload sites to reflect changes
-        await this.loadSites();
-      } catch (error) {
-        console.error('Error creating new site:', error);
-      }
+      // In a real application, you would open a dialog to create a new site
+      // For now, we'll create a sample site to demonstrate create
+      const newSite = {
+        name: `New Site ${new Date().getTime()}`,
+        type: 'Raktár',
+        county: 'Budapest',
+        settlement: 'Budapest',
+        size: 1000,
+        createdAt: new Date().toISOString()
+      };
+
+      this.loading = true;
+
+      const subscription = this.dataService.addDocument('sites', newSite)
+        .pipe(
+          tap(newSiteId => {
+            console.log('New site created with ID:', newSiteId);
+          }),
+          finalize(() => this.loading = false)
+        )
+        .subscribe();
+
+      this.subscriptions.add(subscription);
     }
 
     // Export to Excel
@@ -197,41 +221,63 @@ export class SiteSearchComponent implements OnInit {
       alert('Excel export functionality would be implemented here');
     }
 
-    // Load sites from Firebase
-    async loadSites(): Promise<void> {
-      try {
-        this.loading = true;
-        this.sites = await this.firebaseService.getCollection('sites') as Site[];
-        this.dataSource.data = this.sites;
-        console.log('Sites loaded from Firebase:', this.sites);
-      } catch (error) {
-        console.error('Error loading sites:', error);
-        // If no data exists yet, initialize with sample data
-        if (this.sites.length === 0) {
-          this.initializeSampleData();
-        }
-      } finally {
-        this.loading = false;
-      }
+    // Load sites from data service
+    loadSites(): void {
+      this.loading = true;
+
+      const subscription = this.dataService.getCollection('sites')
+        .pipe(
+          tap(sites => {
+            this.sites = sites;
+            this.dataSource.data = sites;
+            console.log('Sites loaded:', sites);
+
+            // If no data exists yet, initialize with sample data
+            if (sites.length === 0) {
+              this.initializeSampleData();
+            }
+          }),
+          finalize(() => this.loading = false)
+        )
+        .subscribe();
+
+      this.subscriptions.add(subscription);
     }
 
-    // Initialize sample data in Firebase if no data exists
-    async initializeSampleData(): Promise<void> {
+    // Initialize sample data if no data exists
+    initializeSampleData(): void {
       const sampleSites = [
         {name: 'Duna Raktárbázis', type: 'Raktár', county: 'Pest', settlement: 'Budapest', size: 1500},
         {name: 'Hajdú Business Center', type: 'Iroda', county: 'Hajdú-Bihar', settlement: 'Debrecen', size: 800},
         {name: 'Avas Ipari Park', type: 'Gyártóüzem', county: 'Borsod-Abaúj-Zemplén', settlement: 'Miskolc', size: 3000}
       ];
 
-      try {
-        for (const site of sampleSites) {
-          await this.firebaseService.addDocument('sites', site);
-        }
-        console.log('Sample data initialized in Firebase');
-        // Reload sites after initialization
-        await this.loadSites();
-      } catch (error) {
-        console.error('Error initializing sample data:', error);
-      }
+      console.log('Initializing sample data...');
+      this.loading = true;
+
+      // Add sites one by one
+      const subscription = this.addSitesSequentially(sampleSites)
+        .pipe(
+          tap(() => {
+            console.log('Sample data initialized');
+          }),
+          finalize(() => this.loading = false)
+        )
+        .subscribe();
+
+      this.subscriptions.add(subscription);
+    }
+
+    // Helper method to add sites sequentially
+    private addSitesSequentially(sites: any[]): Observable<any> {
+      // Use switchMap to chain the observables
+      return this.dataService.addDocument('sites', sites[0]).pipe(
+        switchMap(() => {
+          if (sites.length > 1) {
+            return this.addSitesSequentially(sites.slice(1));
+          }
+          return this.dataService.getCollection('sites').pipe(first());
+        })
+      );
     }
 }

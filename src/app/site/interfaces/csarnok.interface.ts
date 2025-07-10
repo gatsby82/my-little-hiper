@@ -1,0 +1,54 @@
+import {CsarnokTerulet} from "./csarnok-terulet.interface";
+
+export interface Csarnok {
+  id: number;
+  letrehozo: string;
+  letrehozva: Date;
+  modosito: string;
+  modositva: Date;
+  torolt: boolean;
+  telephely_id: number;
+  meret: number;
+  teruletBovitheto: boolean;
+  csarnokBovitheto: boolean;
+  iparterMeret: number;
+  gyartoCsarnokMeret: number;
+  raktarMeret: number;
+  kozosHelyMeret: number;
+  nyitottTerulet: number;
+  epuleteSzerkezet: string;
+  suritettLevego: string;
+  padloTerhTol: number;
+  padloTerhIg: number;
+  belmagassagTol: number;
+  belmagassagIg: number;
+  epitesEv: number;
+  daruLehet: boolean;
+  darukSzama: number;
+  daruTipus: string;
+  ipariKapuVan: boolean;
+  crossDockLehet: boolean;
+  hutoFutoVan: boolean;
+  tuzcsapVan: boolean;
+  tuzoltoRendszerVan: boolean;
+  kameraRendszerVan: boolean;
+  riasztoRendszerVan: boolean;
+  keritesVan: boolean;
+  parkoloVan: boolean;
+  kamionMegkoz: boolean;
+  felujitasKell: boolean;
+  btsOpcioVan: boolean;
+  kiado: boolean;
+  elado: boolean;
+  kiadoIdoszakMin: number;
+  kiadoMinTerulet: number;
+  kiadoBerletiDijEur: number;
+  kiadoEgyebDijEur: number;
+  eladasiIranyarEur: number;
+  birtokne: string;
+  minosites: string;
+  szolgDij: string;
+  csarnokTeruletek: CsarnokTerulet[];  // külön interface-ben definiálva
+  ipariKapuSzamEp: number;
+  ipariKapuSzamTh: number;
+}

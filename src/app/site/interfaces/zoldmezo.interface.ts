@@ -1,0 +1,35 @@
+export interface Zoldmezo {
+  id: number;
+  letrehozo: string;
+  letrehozva: Date;
+  modosito: string;
+  modositva: Date;
+  torolt: boolean;
+  telephely_id: number;
+  oszthato: boolean;
+  legkisebbTerulet: number;
+  bovithetoTerulet: number;
+  meret: string;
+  maxBeepitheto: number;
+  minZoldterulet: number;
+  maxEpuletMagassag: number;
+  besorolas_nev: string;
+  tulForma_nev: string;
+  erdoVan: boolean;
+  loszerMentKell: boolean;
+  karMentKell: boolean;
+  bontasKell: boolean;
+  vezetekAtmegy: boolean;
+  vezetekAthelyezheto: boolean;
+  palyazatiErintettseg: boolean;
+  regeszetiErintettseg: boolean;
+  geodeziaVan_nev: string;
+  kornyHatVizsgaVan_nev: string;
+  lejtes_nev: string;
+  iranyarEur: number;
+  iranyarNmEurTol: number;
+  iranyarNmEurIg: number;
+  megujuloEnergia_nev: string;
+  jelenlegiHasznositas: string;
+  termVedErintettseg: string;
+}
