@@ -101,16 +101,13 @@ export class DataService {
         });
       }),
       tap((sites: Site[]) => {
-        this.sitesSubject.next(sites);
-        this.simpleSitesSubject.next(sites.map(site => this.siteToSimpleSite(site)));
+        this.updateSiteSubjects(sites);
 
         this.sitesLoaded = true;
-        console.log('Data service initialized with', sites.length, 'sites');
       }),
       catchError(error => {
         console.error('Error initializing data service:', error);
-        // Initialize with empty array in case of error
-        this.sitesSubject.next([]);
+        this.updateSiteSubjects([]);
         return of([]);
       })
     ).subscribe();
@@ -214,10 +211,12 @@ export class DataService {
     };
 
     const currentSites = this.sitesSubject.getValue();
-    this.sitesSubject.next([...currentSites, newSite]);
+    this.updateSiteSubjects([...currentSites, newSite]);
 
-    const currentSimpleSites = this.simpleSitesSubject.getValue();
-    this.simpleSitesSubject.next([...currentSimpleSites, this.siteToSimpleSite(newSite)]);
+    // this.sitesSubject.next([...currentSites, newSite]);
+    //
+    // const currentSimpleSites = this.simpleSitesSubject.getValue();
+    // this.simpleSitesSubject.next([...currentSimpleSites, this.siteToSimpleSite(newSite)]);
 
     return of(azonosito);
   }
@@ -253,7 +252,7 @@ export class DataService {
     const updatedSites = [...currentSites];
     updatedSites[siteIndex] = updatedSiteView;
 
-    this.sitesSubject.next(updatedSites);
+    this.updateSiteSubjects(updatedSites);
     return of(true);
   }
 
@@ -278,12 +277,17 @@ export class DataService {
       return of(false);
     }
 
-    this.sitesSubject.next(updatedSites);
+    this.updateSiteSubjects(updatedSites);
     return of(true);
   }
 
   private getNextId(): number {
     return this.nextId++;
+  }
+
+  private updateSiteSubjects(sites: Site[]): void {
+    this.sitesSubject.next(sites);
+    this.simpleSitesSubject.next(sites.map(site => this.siteToSimpleSite(site)));
   }
 
   private siteToSimpleSite(site: Site): SimpleSite {

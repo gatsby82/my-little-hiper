@@ -118,11 +118,7 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
 
   // Action methods
   editSite(site: SimpleSite): void {
-    console.log('Edit site:', site);
-
-    // Navigate to the SiteEditComponent with the site ID
-    this.router.navigate(['/sites/edit', site.id]).then(r => console.log(r)
-    );
+    this.router.navigate(['/sites/edit', site.id]).then();
   }
 
   deleteSite(site: SimpleSite): void {
@@ -201,54 +197,11 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
         tap(sites => {
           this.simpleSites = sites;
           this.dataSource.data = sites;
-          console.log('Sites loaded:', sites);
-
-          // If no data exists yet, initialize with sample data
-          if (sites.length === 0) {
-            this.initializeSampleData();
-          }
         }),
         finalize(() => this.loading = false)
       )
       .subscribe();
 
     this.subscriptions.add(subscription);
-  }
-
-  // Initialize sample data if no data exists
-  initializeSampleData(): void {
-    const sampleSites = [
-      {name: 'Duna Raktárbázis', type: 'Raktár', county: 'Pest', settlement: 'Budapest', size: 1500},
-      {name: 'Hajdú Business Center', type: 'Iroda', county: 'Hajdú-Bihar', settlement: 'Debrecen', size: 800},
-      {name: 'Avas Ipari Park', type: 'Gyártóüzem', county: 'Borsod-Abaúj-Zemplén', settlement: 'Miskolc', size: 3000}
-    ];
-
-    console.log('Initializing sample data...');
-    this.loading = true;
-
-    // Add sites one by one
-    const subscription = this.addSitesSequentially(sampleSites)
-      .pipe(
-        tap(() => {
-          console.log('Sample data initialized');
-        }),
-        finalize(() => this.loading = false)
-      )
-      .subscribe();
-
-    this.subscriptions.add(subscription);
-  }
-
-  // Helper method to add sites sequentially
-  private addSitesSequentially(sites: any[]): Observable<any> {
-    // Use switchMap to chain the observables
-    return this.dataService.addDocument('sites', sites[0]).pipe(
-      switchMap(() => {
-        if (sites.length > 1) {
-          return this.addSitesSequentially(sites.slice(1));
-        }
-        return this.dataService.getSitesCollection('sites').pipe(first());
-      })
-    );
   }
 }

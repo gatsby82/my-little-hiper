@@ -5,17 +5,14 @@
     </mat-card-header>
 
     <mat-card-content>
-      <!-- Loading spinner -->
       <div *ngIf="loading" class="loading-spinner">
         <mat-spinner diameter="50"></mat-spinner>
       </div>
 
-      <!-- Error message -->
       <div *ngIf="error" class="error-message">
         {{ error }}
       </div>
 
-      <!-- Edit form -->
       <form [formGroup]="siteForm" *ngIf="!loading && !error" (ngSubmit)="saveSite()">
         <mat-tab-group>
           <!-- Basic Information Tab -->
@@ -26,27 +23,27 @@
               <div class="form-row">
                 <mat-form-field appearance="outline" class="form-field">
                   <mat-label>Név</mat-label>
-                  <input matInput formControlName="name" placeholder="Telephely neve">
-                  <mat-error *ngIf="siteForm.get('name')?.hasError('required')">
+                  <input matInput formControlName="megnevezes" placeholder="Telephely neve">
+                  <mat-error *ngIf="siteForm.get('megnevezes')?.hasError('required')">
                     Név megadása kötelező
                   </mat-error>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="form-field">
                   <mat-label>Angol név</mat-label>
-                  <input matInput formControlName="nameEnglish" placeholder="Telephely angol neve">
+                  <input matInput formControlName="megnevezesAngol" placeholder="Telephely angol neve">
                 </mat-form-field>
               </div>
 
               <div class="form-row">
                 <mat-form-field appearance="outline" class="form-field">
                   <mat-label>Típus</mat-label>
-                  <mat-select formControlName="type">
+                  <mat-select formControlName="tipus_nev">
                     <mat-option *ngFor="let type of siteTypes" [value]="type.value">
                       {{ type.viewValue }}
                     </mat-option>
                   </mat-select>
-                  <mat-error *ngIf="siteForm.get('type')?.hasError('required')">
+                  <mat-error *ngIf="siteForm.get('tipus_nev')?.hasError('required')">
                     Típus kiválasztása kötelező
                   </mat-error>
                 </mat-form-field>
@@ -75,7 +72,7 @@
 
               <mat-form-field appearance="outline" class="form-field full-width">
                 <mat-label>Megjegyzések</mat-label>
-                <textarea matInput formControlName="notes" placeholder="Megjegyzések" rows="4"></textarea>
+                <textarea matInput formControlName="megjegyzes" placeholder="Megjegyzések" rows="4"></textarea>
               </mat-form-field>
             </div>
           </mat-tab>
@@ -88,28 +85,28 @@
               <div class="form-row">
                 <mat-form-field appearance="outline" class="form-field">
                   <mat-label>Régió</mat-label>
-                  <input matInput formControlName="region" placeholder="Régió">
+                  <input matInput formControlName="regio_nev" placeholder="Régió">
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="form-field">
                   <mat-label>Körzet</mat-label>
-                  <input matInput formControlName="korzet" placeholder="Körzet">
+                  <input matInput formControlName="korzet_nev" placeholder="Körzet">
                 </mat-form-field>
               </div>
 
               <div class="form-row">
                 <mat-form-field appearance="outline" class="form-field">
                   <mat-label>Vármegye</mat-label>
-                  <input matInput formControlName="county" placeholder="Vármegye">
-                  <mat-error *ngIf="siteForm.get('county')?.hasError('required')">
+                  <input matInput formControlName="megye_nev" placeholder="Vármegye">
+                  <mat-error *ngIf="siteForm.get('megye_nev')?.hasError('required')">
                     Vármegye megadása kötelező
                   </mat-error>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="form-field">
                   <mat-label>Település</mat-label>
-                  <input matInput formControlName="settlement" placeholder="Település">
-                  <mat-error *ngIf="siteForm.get('settlement')?.hasError('required')">
+                  <input matInput formControlName="telepules_nev" placeholder="Település">
+                  <mat-error *ngIf="siteForm.get('telepules_nev')?.hasError('required')">
                     Település megadása kötelező
                   </mat-error>
                 </mat-form-field>
@@ -118,12 +115,12 @@
               <div class="form-row">
                 <mat-form-field appearance="outline" class="form-field">
                   <mat-label>Irányítószám</mat-label>
-                  <input matInput formControlName="postalCode" placeholder="Irányítószám">
+                  <input matInput formControlName="irsz" placeholder="Irányítószám">
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="form-field">
                   <mat-label>Utca</mat-label>
-                  <input matInput formControlName="street" placeholder="Utca">
+                  <input matInput formControlName="utca" placeholder="Utca">
                 </mat-form-field>
               </div>
 
@@ -189,11 +186,11 @@
               <div class="form-row">
                 <mat-form-field appearance="outline" class="form-field">
                   <mat-label>Méret (m²)</mat-label>
-                  <input matInput type="number" formControlName="size" placeholder="Méret">
-                  <mat-error *ngIf="siteForm.get('size')?.hasError('required')">
+                  <input matInput type="number" formControlName="meret" placeholder="Méret">
+                  <mat-error *ngIf="siteForm.get('meret')?.hasError('required')">
                     Méret megadása kötelező
                   </mat-error>
-                  <mat-error *ngIf="siteForm.get('size')?.hasError('min')">
+                  <mat-error *ngIf="siteForm.get('meret')?.hasError('min')">
                     A méretnek nagyobbnak kell lennie nullánál
                   </mat-error>
                 </mat-form-field>
@@ -259,7 +256,7 @@
 
                 <mat-form-field appearance="outline" class="form-field">
                   <mat-label>Állapot</mat-label>
-                  <input matInput formControlName="allapot" placeholder="Állapot">
+                  <input matInput formControlName="allapot_nev" placeholder="Állapot">
                 </mat-form-field>
               </div>
 

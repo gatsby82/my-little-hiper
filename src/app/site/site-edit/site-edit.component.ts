@@ -42,17 +42,15 @@ import {Site} from "../interfaces/site.interface";
 })
 export class SiteEditComponent implements OnInit {
   siteId: number = -1;
-  site: Site | null = null;
+  site: Site | undefined = undefined;
   siteForm: FormGroup;
   loading: boolean = false;
   error: string = '';
 
-  // Site type options
   siteTypes = [
-    {value: 'Raktár', viewValue: 'Raktár'},
-    {value: 'Iroda', viewValue: 'Iroda'},
-    {value: 'Gyártóüzem', viewValue: 'Gyártóüzem'},
-    {value: 'Logisztikai központ', viewValue: 'Logisztikai központ'}
+    {value: 'Ipari park', viewValue: 'Ipari park'},
+    {value: 'Barnamezős terület', viewValue: 'Barnamezős terület'},
+    {value: 'Zöldmező', viewValue: 'Zöldmező'},
   ];
 
   // Status options
@@ -80,23 +78,23 @@ export class SiteEditComponent implements OnInit {
     // Initialize the form
     this.siteForm = this.fb.group({
       // Basic information
-      name: ['', Validators.required],
-      nameEnglish: [''],
-      type: ['', Validators.required],
+      megnevezes: ['', Validators.required],
+      megnevezesAngol: [''],
+      tipus_nev: ['', Validators.required],
       azonosito: [''],
       status: ['Aktív'],
       inaktivMagyarazat: [''],
 
       // Location information
-      region: [''],
-      county: ['', Validators.required],
-      settlement: ['', Validators.required],
-      postalCode: [''],
-      street: [''],
-      korzet: [''],
+      regio_nev: [''],
+      megye_nev: ['', Validators.required],
+      telepules_nev: ['', Validators.required],
+      irsz: [''],
+      utca: [''],
+      korzet_nev: [''],
 
       // Technical information
-      size: [0, [Validators.required, Validators.min(1)]],
+      meret: [0, [Validators.required, Validators.min(1)]],
       bpTav: [0],
       iparVaganyVan: [false],
       aram: [0],
@@ -105,7 +103,7 @@ export class SiteEditComponent implements OnInit {
       ipariviz: [0],
       szennyviz: [0],
       birtokne: [''],
-      allapot: [''],
+      allapot_nev: [''],
       kiajanlhato: [0],
       egyeb: [''],
       epuletVan: [false],
@@ -116,7 +114,7 @@ export class SiteEditComponent implements OnInit {
       gpsHosszusag: [0],
 
       // Notes
-      notes: [''],
+      megjegyzes: [''],
 
       // Related entities
       csarnok: this.fb.group({
@@ -282,23 +280,23 @@ export class SiteEditComponent implements OnInit {
   populateForm(site: Site): void {
     // Basic form fields
     this.siteForm.patchValue({
-      name: site.megnevezes,
-      nameEnglish: site.megnevezesAngol || '',
-      type: site.tipus_nev,
+      megnevezes: site.megnevezes,
+      megnevezesAngol: site.megnevezesAngol || '',
+      tipus_nev: site.tipus_nev,
       azonosito: site.id || '',
       status: site.inaktiv ? 'Inaktív' : (site.torolt ? 'Törölt' : 'Aktív'),
       inaktivMagyarazat: site.inaktivMagyarazat || '',
 
       // Location information
-      region: site.regio_nev || '',
-      county: site.megye_nev,
-      settlement: site.telepules_nev,
-      postalCode: site.irsz || '',
-      street: site.utca || '',
-      korzet: site.korzet_nev || '',
+      regio_nev: site.regio_nev || '',
+      megye_nev: site.megye_nev,
+      telepules_nev: site.telepules_nev,
+      irsz: site.irsz || '',
+      utca: site.utca || '',
+      korzet_nev: site.korzet_nev || '',
 
       // Technical information
-      size: site.meret,
+      meret: site.meret,
       bpTav: site.bpTav || 0,
       iparVaganyVan: site.iparVaganyVan || false,
       aram: site.aram || 0,
@@ -307,7 +305,7 @@ export class SiteEditComponent implements OnInit {
       ipariviz: site.ipariviz || 0,
       szennyviz: site.szennyviz || 0,
       birtokne: site.birtokne || '',
-      allapot: site.allapot_nev || '',
+      allapot_nev: site.allapot_nev || '',
       kiajanlhato: site.kiajanlhato || 0,
       egyeb: site.egyeb || '',
       epuletVan: site.epuletVan || false,
@@ -318,7 +316,7 @@ export class SiteEditComponent implements OnInit {
       gpsHosszusag: site.gpsHosszusag || 0,
 
       // Notes
-      notes: site.megjegyzes || ''
+      megjegyzes: site.megjegyzes || ''
     });
 
     // Handle related entities if they exist
@@ -427,70 +425,83 @@ export class SiteEditComponent implements OnInit {
     this.loading = true;
     const formValue = this.siteForm.value;
 
-    // Map form values to the expected format for the API
-    const updatedData = {
-      name: formValue.name,
-      nameEnglish: formValue.nameEnglish,
-      type: formValue.type,
-      county: formValue.county,
-      settlement: formValue.settlement,
-      size: formValue.size,
-      region: formValue.region,
-      postalCode: formValue.postalCode,
-      notes: formValue.notes,
+    try { // Map form values to the expected format for the API
+      const updatedData = {
+        id: this.siteId,
+        megnevezes: formValue.megnevezes,
+        megnevezesAngol: formValue.megnevezesAngol,
+        tipus_nev: formValue.tipus_nev,
+        megye_nev: formValue.megye_nev,
+        telepules_nev: formValue.telepules_nev,
+        meret: formValue.meret,
+        regio_nev: formValue.regio_nev,
+        irsz: formValue.irsz,
+        megjegyzes: formValue.megjegyzes,
 
-      // Additional properties
-      inaktiv: formValue.status === 'Inaktív',
-      torolt: formValue.status === 'Törölt',
-      inaktivMagyarazat: formValue.inaktivMagyarazat,
-      utca: formValue.street,
-      korzet_nev: formValue.korzet,
-      bpTav: formValue.bpTav,
-      iparVaganyVan: formValue.iparVaganyVan,
-      aram: formValue.aram,
-      gaz: formValue.gaz,
-      viz: formValue.viz,
-      ipariviz: formValue.ipariviz,
-      szennyviz: formValue.szennyviz,
-      birtokne: formValue.birtokne,
-      allapot_nev: formValue.allapot,
-      kiajanlhato: formValue.kiajanlhato,
-      egyeb: formValue.egyeb,
-      epuletVan: formValue.epuletVan,
-      terkepLink: formValue.terkepLink,
-      gpsSzelesseg: formValue.gpsSzelesseg,
-      gpsHosszusag: formValue.gpsHosszusag,
+        // Additional properties
+        inaktiv: formValue.status === 'Inaktív',
+        torolt: formValue.status === 'Törölt',
+        inaktivMagyarazat: formValue.inaktivMagyarazat,
+        utca: formValue.utca,
+        korzet_nev: formValue.korzet_nev,
+        bpTav: formValue.bpTav,
+        iparVaganyVan: formValue.iparVaganyVan,
+        aram: formValue.aram,
+        gaz: formValue.gaz,
+        viz: formValue.viz,
+        ipariviz: formValue.ipariviz,
+        szennyviz: formValue.szennyviz,
+        birtokne: formValue.birtokne,
+        allapot_nev: formValue.allapot_nev,
+        kiajanlhato: formValue.kiajanlhato,
+        egyeb: formValue.egyeb,
+        epuletVan: formValue.epuletVan,
+        terkepLink: formValue.terkepLink,
+        gpsSzelesseg: formValue.gpsSzelesseg,
+        gpsHosszusag: formValue.gpsHosszusag,
 
-      // Related entities
-      csarnok: formValue.csarnok,
-      iroda: formValue.iroda,
-      zoldmezo: formValue.zoldmezo,
-      kapcsolattartok: formValue.kapcsolattartok,
-      dokumentumok: formValue.dokumentumok,
-      telephelyReszletek: formValue.telephelyReszletek,
-      helyrajziSzamok: formValue.helyrajziSzamok,
+        // Required fields from Site interface that might be missing
+        letrehozo: this.site?.letrehozo || '',
+        letrehozva: this.site?.letrehozva || new Date(),
+        modosito: this.site?.modosito || '',
+        modositva: new Date(),
+        azonosito: formValue.azonosito || '',
+        migralt: this.site?.migralt || false,
+        migraltLetrehozva: this.site?.migraltLetrehozva,
 
-      // Distances
-      autoPalya: formValue.autoPalya,
-      vasutallomas: formValue.vasutallomas,
-      folyamiKikoto: formValue.folyamiKikoto,
-      autobuszmegallo: formValue.autobuszmegallo,
-      lakoterulet: formValue.lakoterulet,
-      fout: formValue.fout
-    };
+        //Related entities
+        csarnok: formValue.csarnok,
+        iroda: formValue.iroda,
+        zoldmezo: formValue.zoldmezo,
+        kapcsolattartok: formValue.kapcsolattartok,
+        dokumentumok: formValue.dokumentumok,
+        telephelyReszletek: formValue.telephelyReszletek,
+        helyrajziSzamok: formValue.helyrajziSzamok,
 
-    this.dataService.updateDocument('sites', this.siteId, updatedData)
-      .pipe(
-        tap(success => {
-          if (success) {
-            this.router.navigate(['sites']);
-          } else {
-            this.error = 'Failed to update site';
-          }
-        }),
-        finalize(() => this.loading = false)
-      )
-      .subscribe();
+        // Distances
+        autoPalya: formValue.autoPalya,
+        vasutallomas: formValue.vasutallomas,
+        folyamiKikoto: formValue.folyamiKikoto,
+        autobuszmegallo: formValue.autobuszmegallo,
+        lakoterulet: formValue.lakoterulet,
+        fout: formValue.fout
+      };
+
+      this.dataService.updateDocument('sites', this.siteId, updatedData)
+        .pipe(
+          tap(success => {
+            if (success) {
+              this.router.navigate(['sites']);
+            } else {
+              this.error = 'Failed to update site';
+            }
+          }),
+          finalize(() => this.loading = false)
+        )
+        .subscribe();
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   // Cancel editing and return to the sites list
