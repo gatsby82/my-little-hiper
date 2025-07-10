@@ -1,71 +1,36 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, catchError, map, of, tap } from 'rxjs';
+import { Site } from '../site/interfaces/site.interface';
 
-// export interface Site {
-//   id: string;
-//   name: string;
-//   type: string;
-//   county: string;
-//   settlement: string;
-//   size: number;
-//   createdAt?: string;
-//   lastUpdated?: string;
-//
-//   // Additional properties from sites.json
-//   nameEnglish?: string;  // MEGNEVEZES_ANGOL
-//   region?: string;       // REGIO
-//   postalCode?: string;   // IRSZ
-//   migrated?: boolean;    // MIGRALT
-//   notes?: string;        // MEGJEGYZES
-//
-//   // Properties for complex objects that might be added in the future
-//   address?: {
-//     street?: string;
-//     city?: string;
-//     state?: string;
-//     country?: string;
-//     postalCode?: string;
-//   };
-//
-//   contact?: {
-//     name?: string;
-//     email?: string;
-//     phone?: string;
-//     position?: string;
-//   };
-//
-//   facilities?: {
-//     hasParking?: boolean;
-//     parkingCapacity?: number;
-//     hasLoadingDock?: boolean;
-//     loadingDockCount?: number;
-//     hasSecurity?: boolean;
-//     hasFireProtection?: boolean;
-//   };
-//
-//   dimensions?: {
-//     width?: number;
-//     length?: number;
-//     height?: number;
-//     totalArea?: number;
-//     usableArea?: number;
-//   };
-//
-//   // Allow for any additional properties to be added in the future
-//   [key: string]: any;
-// }
+// Define an interface for backward compatibility with existing code
+export interface SiteView {
+  id: string;
+  name: string;
+  type: string;
+  county: string;
+  settlement: string;
+  size: number;
+  createdAt?: string;
+  lastUpdated?: string;
+  nameEnglish?: string;
+  region?: string;
+  postalCode?: string;
+  migrated?: boolean;
+  notes?: string;
+  [key: string]: any;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
-  private sitesSubject = new BehaviorSubject<Site[]>([]);
+  private sitesSubject = new BehaviorSubject<SiteView[]>([]);
   private sitesLoaded = false;
   private nextId = 1;
 
   // Expose sites as an Observable
-  public sites$: Observable<Site[]> = this.sitesSubject.asObservable();
+  public sites$: Observable<SiteView[]> = this.sitesSubject.asObservable();
 
   constructor(private http: HttpClient) {
     // Initialize data on service creation
@@ -82,23 +47,65 @@ export class DataService {
 
     this.http.get<any>('assets/data/sites.json').pipe(
       map(sitesData => {
-        // Map the data from the JSON format to the Site interface
-        return sitesData.sites.map((site: any) => ({
-          id: site.AZONOSITO || `SITE-${this.getNextId()}`,
-          name: site.MEGNEVEZES,
-          type: site.TIPUS,
-          county: site.VARMEGYE,
-          settlement: site.TELEPULES,
-          size: site.MERET,
-          createdAt: new Date().toISOString(),
+        // Map the data from the JSON format to the Site interface and then to SiteView
+        return sitesData.sites.map((siteData: any) => {
+          // First create a Site object with the new interface
+          const site: Site = {
+            id: parseInt(siteData.AZONOSITO) || this.getNextId(),
+            inaktiv: false,
+            inaktivMagyarazat: '',
+            letrehozo: '',
+            letrehozva: new Date(),
+            modosito: '',
+            modositva: new Date(),
+            torolt: false,
+            megnevezes: siteData.MEGNEVEZES,
+            megnevezesAngol: siteData.MEGNEVEZES_ANGOL,
+            azonosito: siteData.AZONOSITO || `SITE-${this.getNextId()}`,
+            tipus_nev: siteData.TIPUS,
+            regio_nev: siteData.REGIO,
+            megye_nev: siteData.VARMEGYE,
+            telepules_nev: siteData.TELEPULES,
+            korzet_nev: '',
+            irsz: siteData.IRSZ,
+            utca: '',
+            migralt: siteData.MIGRALT,
+            migraltLetrehozva: new Date(),
+            meret: siteData.MERET,
+            megjegyzes: siteData.MEGJEGYZES,
+            bpTav: 0,
+            iparVaganyVan: false,
+            aram: 0,
+            gaz: 0,
+            viz: 0,
+            ipariviz: 0,
+            szennyviz: 0,
+            birtokne: '',
+            allapot_nev: '',
+            kijajanlhato: 0,
+            egyeb: '',
+            epuletVan: false,
+            terkepLink: '',
+            gpsSzelesseg: 0,
+            gpsHosszusag: 0,
+            csarnok: [],
+            iroda: [],
+            zoldmezo: [],
+            kapcsolattartok: [],
+            dokumentumok: [],
+            telephelyReszletek: [],
+            helyrajziSzamok: [],
+            autoPalya: [],
+            vasutallomas: [],
+            folyamikiKikoto: [],
+            autobusmegallo: [],
+            lakoterulet: [],
+            fout: []
+          };
 
-          // Map additional properties from sites.json
-          nameEnglish: site.MEGNEVEZES_ANGOL,
-          region: site.REGIO,
-          postalCode: site.IRSZ,
-          migrated: site.MIGRALT,
-          notes: site.MEGJEGYZES
-        }));
+          // Then convert to SiteView for backward compatibility
+          return this.siteToSiteView(site);
+        });
       }),
       tap(sites => {
         this.sitesSubject.next(sites);
@@ -117,7 +124,7 @@ export class DataService {
   /**
    * Get all sites as an Observable
    */
-  getCollection(collectionName: string): Observable<Site[]> {
+  getCollection(collectionName: string): Observable<SiteView[]> {
     if (!this.sitesLoaded) {
       this.initialize();
     }
@@ -142,35 +149,70 @@ export class DataService {
       return of('');
     }
 
-    const newId = `SITE-${this.getNextId()}`;
-    // Create a new site with all provided data
+    const newId = this.getNextId();
+    const azonosito = `SITE-${newId}`;
+
+    // Create a new site with the new interface
     const newSite: Site = {
       id: newId,
-      name: data.name,
-      type: data.type,
-      county: data.county,
-      settlement: data.settlement,
-      size: data.size,
-      createdAt: data.createdAt || new Date().toISOString(),
-
-      // Include additional properties if provided
-      ...(data.nameEnglish && { nameEnglish: data.nameEnglish }),
-      ...(data.region && { region: data.region }),
-      ...(data.postalCode && { postalCode: data.postalCode }),
-      ...(data.migrated !== undefined && { migrated: data.migrated }),
-      ...(data.notes && { notes: data.notes }),
-
-      // Include complex objects if provided
-      ...(data.address && { address: data.address }),
-      ...(data.contact && { contact: data.contact }),
-      ...(data.facilities && { facilities: data.facilities }),
-      ...(data.dimensions && { dimensions: data.dimensions })
+      inaktiv: false,
+      inaktivMagyarazat: '',
+      letrehozo: '',
+      letrehozva: new Date(),
+      modosito: '',
+      modositva: new Date(),
+      torolt: false,
+      megnevezes: data.name,
+      megnevezesAngol: data.nameEnglish || '',
+      azonosito: azonosito,
+      tipus_nev: data.type,
+      regio_nev: data.region || '',
+      megye_nev: data.county,
+      telepules_nev: data.settlement,
+      korzet_nev: '',
+      irsz: data.postalCode || '',
+      utca: data.address?.street || '',
+      migralt: data.migrated || false,
+      migraltLetrehozva: new Date(),
+      meret: data.size,
+      megjegyzes: data.notes || '',
+      bpTav: 0,
+      iparVaganyVan: false,
+      aram: 0,
+      gaz: 0,
+      viz: 0,
+      ipariviz: 0,
+      szennyviz: 0,
+      birtokne: '',
+      allapot_nev: '',
+      kijajanlhato: 0,
+      egyeb: '',
+      epuletVan: false,
+      terkepLink: '',
+      gpsSzelesseg: 0,
+      gpsHosszusag: 0,
+      csarnok: [],
+      iroda: [],
+      zoldmezo: [],
+      kapcsolattartok: [],
+      dokumentumok: [],
+      telephelyReszletek: [],
+      helyrajziSzamok: [],
+      autoPalya: [],
+      vasutallomas: [],
+      folyamikiKikoto: [],
+      autobusmegallo: [],
+      lakoterulet: [],
+      fout: []
     };
 
-    const currentSites = this.sitesSubject.getValue();
-    this.sitesSubject.next([...currentSites, newSite]);
+    // Convert to SiteView for backward compatibility
+    const newSiteView = this.siteToSiteView(newSite);
 
-    return of(newId);
+    const currentSites = this.sitesSubject.getValue();
+    this.sitesSubject.next([...currentSites, newSiteView]);
+
+    return of(azonosito);
   }
 
   /**
@@ -194,14 +236,15 @@ export class DataService {
       return of(false);
     }
 
-    const updatedSite = {
+    // Update the SiteView directly for backward compatibility
+    const updatedSiteView = {
       ...currentSites[siteIndex],
       ...data,
       lastUpdated: new Date().toISOString()
     };
 
     const updatedSites = [...currentSites];
-    updatedSites[siteIndex] = updatedSite;
+    updatedSites[siteIndex] = updatedSiteView;
 
     this.sitesSubject.next(updatedSites);
     return of(true);
@@ -237,5 +280,26 @@ export class DataService {
    */
   private getNextId(): number {
     return this.nextId++;
+  }
+
+  /**
+   * Convert a Site object to a SiteView object for backward compatibility
+   */
+  private siteToSiteView(site: Site): SiteView {
+    return {
+      id: site.azonosito,
+      name: site.megnevezes,
+      type: site.tipus_nev,
+      county: site.megye_nev,
+      settlement: site.telepules_nev,
+      size: site.meret,
+      createdAt: site.letrehozva.toISOString(),
+      lastUpdated: site.modositva.toISOString(),
+      nameEnglish: site.megnevezesAngol,
+      region: site.regio_nev,
+      postalCode: site.irsz,
+      migrated: site.migralt,
+      notes: site.megjegyzes
+    };
   }
 }

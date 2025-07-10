@@ -10,10 +10,10 @@ import {MatSelectModule} from "@angular/material/select";
 import {MatToolbarModule} from "@angular/material/toolbar";
 import {FormsModule} from "@angular/forms";
 import {NgForOf} from "@angular/common";
-import {DataService, Site} from "../../services/data.service";
+import {DataService, SiteView} from "../../services/data.service";
 import {Observable, Subscription, finalize, first, switchMap, tap} from "rxjs";
 
-// Site interface is now imported from data.service
+// SiteView interface is now imported from data.service
 
 @Component({
   selector: 'app-site-search',
@@ -40,7 +40,7 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
     displayedColumns: string[] = ['name', 'type', 'county', 'settlement', 'size', 'actions'];
 
     // Data source for the table
-    dataSource = new MatTableDataSource<Site>();
+    dataSource = new MatTableDataSource<SiteView>();
 
     // Search filter
     searchText = '';
@@ -56,7 +56,7 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
     selectedView = 'all';
 
     // Sites data
-    sites: Site[] = [];
+    sites: SiteView[] = [];
 
     // Loading indicator
     loading = false;
@@ -74,7 +74,7 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
       this.loadSites();
 
       // Set up filter predicate to search by name
-      this.dataSource.filterPredicate = (data: Site, filter: string) => {
+      this.dataSource.filterPredicate = (data: SiteView, filter: string) => {
         const searchTerms = filter.split('|');
         const searchText = searchTerms[0].toLowerCase();
         const viewFilter = searchTerms[1];
@@ -126,7 +126,7 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
     }
 
     // Action methods
-    editSite(site: Site): void {
+    editSite(site: SiteView): void {
       console.log('Edit site:', site);
 
       // In a real application, you would open a dialog to edit the site
@@ -154,7 +154,7 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
       this.subscriptions.add(subscription);
     }
 
-    deleteSite(site: Site): void {
+    deleteSite(site: SiteView): void {
       console.log('Delete site:', site);
 
       // In a real application, you would show a confirmation dialog
@@ -178,7 +178,7 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
       }
     }
 
-    viewSite(site: Site): void {
+    viewSite(site: SiteView): void {
       console.log('View site:', site);
       // In a real application, you would navigate to a detail view
       alert(`Viewing details for: ${site.name}`);

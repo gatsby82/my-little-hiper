@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { DataService, Site } from './data.service';
+import { DataService } from './data.service';
 import { HttpClient } from '@angular/common/http';
 import { Observable, concatMap, forkJoin, from, map, of, switchMap, tap } from 'rxjs';
 
