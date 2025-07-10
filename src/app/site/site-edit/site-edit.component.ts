@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators} from '@angular/forms';
 import {DataService, SimpleSite} from '../../services/data.service';
@@ -15,7 +15,7 @@ import {MatIconModule} from '@angular/material/icon';
 import {MatDividerModule} from '@angular/material/divider';
 import {MatExpansionModule} from '@angular/material/expansion';
 import {CommonModule} from '@angular/common';
-import {finalize, tap, first} from 'rxjs';
+import {finalize, tap, first, Subscription} from 'rxjs';
 import {Site} from "../interfaces/site.interface";
 
 @Component({
@@ -40,7 +40,7 @@ import {Site} from "../interfaces/site.interface";
   templateUrl: './site-edit.component.html',
   styleUrl: './site-edit.component.scss'
 })
-export class SiteEditComponent implements OnInit {
+export class SiteEditComponent implements OnInit, OnDestroy {
   siteId: number = -1;
   site: Site | undefined = undefined;
   siteForm: FormGroup;
@@ -68,6 +68,7 @@ export class SiteEditComponent implements OnInit {
 
   // Helyrajzi szám columns
   hrszColumns: string[] = ['helyrajziSzam', 'actions'];
+  private subscriptions = new Subscription();
 
   constructor(
     private route: ActivatedRoute,
@@ -172,40 +173,6 @@ export class SiteEditComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    // Get the site ID from the route parameters
-    this.route.paramMap.subscribe(params => {
-      const id = params.get('id');
-      if (id) {
-        this.siteId = +id;
-        this.loadSite();
-      } else {
-        this.error = 'No site ID provided';
-      }
-    });
-  }
-
-  // Load the site data from the DataService
-  loadSite(): void {
-    this.loading = true;
-    this.dataService.getSitesCollection('sites')
-      .pipe(
-        first(),
-        tap(sites => {
-          const site = sites.find(s => s.id === this.siteId);
-
-          if (site) {
-            this.site = site;
-            this.populateForm(site);
-          } else {
-            this.error = `Site with ID ${this.siteId} not found`;
-          }
-        }),
-        finalize(() => this.loading = false)
-      )
-      .subscribe();
-  }
-
   // Helper methods for form arrays
   get kapcsolattartokArray(): FormArray {
     return this.siteForm.get('kapcsolattartok') as FormArray;
@@ -221,6 +188,51 @@ export class SiteEditComponent implements OnInit {
 
   get helyrajziSzamokArray(): FormArray {
     return this.siteForm.get('helyrajziSzamok') as FormArray;
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
+  ngOnInit(): void {
+    this.site = undefined;
+
+    const subscription = this.route.paramMap.subscribe(params => {
+      const id = params.get('id');
+      if (id) {
+        this.siteId = +id;
+        this.loadSite();
+      } else {
+        this.error = 'No site ID provided';
+      }
+    });
+
+    this.subscriptions.add(subscription);
+  }
+
+  // Load the site data from the DataService
+
+  loadSite(): void {
+    this.loading = true;
+
+    const subscription = this.dataService.getSitesCollection('sites')
+      .pipe(
+        first(),
+        tap(sites => {
+          const site = sites.find(s => s.id === this.siteId);
+
+          if (site) {
+            this.site = site;
+            this.populateForm(site);
+          } else {
+            this.error = `Site with ID ${this.siteId} not found`;
+          }
+        }),
+        finalize(() => this.loading = false)
+      )
+      .subscribe();
+
+    this.subscriptions.add(subscription);
   }
 
   // Add a new kapcsolattarto
@@ -375,15 +387,15 @@ export class SiteEditComponent implements OnInit {
     }
 
     // Add kapcsolattartok if they exist
-    if (site.kapcsolattartok && site.kapcsolattartok.length) {
-      site.kapcsolattartok.forEach(kapcsolattarto => {
-        this.kapcsolattartokArray.push(this.fb.group({
-          nev: [kapcsolattarto.teljesnev || '', Validators.required],
-          telefon: [kapcsolattarto.mobilszam || ''],
-          email: [kapcsolattarto.email || '', [Validators.email]]
-        }));
-      });
-    }
+    // if (site.kapcsolattartok && site.kapcsolattartok.length) {
+    //   site.kapcsolattartok.forEach(kapcsolattarto => {
+    //     this.kapcsolattartokArray.push(this.fb.group({
+    //       nev: [kapcsolattarto.teljesnev || '', Validators.required],
+    //       telefon: [kapcsolattarto.mobilszam || ''],
+    //       email: [kapcsolattarto.email || '', [Validators.email]]
+    //     }));
+    //   });
+    // }
 
     // // Add dokumentumok if they exist
     // if (site.dokumentumok && site.dokumentumok.length) {
@@ -407,13 +419,13 @@ export class SiteEditComponent implements OnInit {
     // }
 
     // Add helyrajziSzamok if they exist
-    if (site.helyrajziSzamok && site.helyrajziSzamok.length) {
-      site.helyrajziSzamok.forEach(hrsz => {
-        this.helyrajziSzamokArray.push(this.fb.group({
-          helyrajziSzam: [hrsz.hrsz || '', Validators.required]
-        }));
-      });
-    }
+    // if (site.helyrajziSzamok && site.helyrajziSzamok.length) {
+    //   site.helyrajziSzamok.forEach(hrsz => {
+    //     this.helyrajziSzamokArray.push(this.fb.group({
+    //       helyrajziSzam: [hrsz.hrsz || '', Validators.required]
+    //     }));
+    //   });
+    // }
   }
 
   // Save the site data
@@ -487,11 +499,11 @@ export class SiteEditComponent implements OnInit {
         fout: formValue.fout
       };
 
-      this.dataService.updateDocument('sites', this.siteId, updatedData)
+      const subscription = this.dataService.updateDocument('sites', this.siteId, updatedData)
         .pipe(
           tap(success => {
             if (success) {
-              this.router.navigate(['sites']);
+              this.router.navigate(['sites']).then();
             } else {
               this.error = 'Failed to update site';
             }
@@ -499,6 +511,8 @@ export class SiteEditComponent implements OnInit {
           finalize(() => this.loading = false)
         )
         .subscribe();
+
+      this.subscriptions.add(subscription);
     } catch (e) {
       console.error(e);
     }
@@ -506,6 +520,6 @@ export class SiteEditComponent implements OnInit {
 
   // Cancel editing and return to the sites list
   cancel(): void {
-    this.router.navigate(['sites']);
+    this.router.navigate(['sites']).then();
   }
 }
