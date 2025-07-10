@@ -10,9 +10,10 @@ import {MatSelectModule} from "@angular/material/select";
 import {MatToolbarModule} from "@angular/material/toolbar";
 import {FormsModule} from "@angular/forms";
 import {NgForOf} from "@angular/common";
-import {DataService, SiteView} from "../../services/data.service";
+import {DataService, SimpleSite} from "../../services/data.service";
 import {Observable, Subscription, finalize, first, switchMap, tap} from "rxjs";
 import {Router} from "@angular/router";
+import {Site} from "../interfaces/site.interface";
 
 // SiteView interface is now imported from data.service
 
@@ -41,7 +42,7 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
   displayedColumns: string[] = ['name', 'type', 'county', 'settlement', 'size', 'actions'];
 
   // Data source for the table
-  dataSource = new MatTableDataSource<SiteView>();
+  dataSource = new MatTableDataSource<SimpleSite>();
 
   // Search filter
   searchText = '';
@@ -57,7 +58,7 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
   selectedView = 'all';
 
   // Sites data
-  sites: SiteView[] = [];
+  simpleSites: SimpleSite[] = [];
 
   // Loading indicator
   loading = false;
@@ -74,7 +75,7 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
     this.loadSites();
 
     // Set up filter predicate to search by name
-    this.dataSource.filterPredicate = (data: SiteView, filter: string) => {
+    this.dataSource.filterPredicate = (data: SimpleSite, filter: string) => {
       const searchTerms = filter.split('|');
       const searchText = searchTerms[0].toLowerCase();
       const viewFilter = searchTerms[1];
@@ -84,22 +85,22 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
       if (viewFilter !== 'all') {
         switch (viewFilter) {
           case 'warehouse':
-            matchesViewFilter = data.type === 'Raktár';
+            matchesViewFilter = data.tipus_nev === 'Raktár';
             break;
           case 'office':
-            matchesViewFilter = data.type === 'Iroda';
+            matchesViewFilter = data.tipus_nev === 'Iroda';
             break;
           case 'factory':
-            matchesViewFilter = data.type === 'Gyártóüzem';
+            matchesViewFilter = data.tipus_nev === 'Gyártóüzem';
             break;
           case 'logistics':
-            matchesViewFilter = data.type === 'Logisztikai központ';
+            matchesViewFilter = data.tipus_nev === 'Logisztikai központ';
             break;
         }
       }
 
       // Check if the site name contains the search text
-      const matchesSearchText = searchText ? data.name.toLowerCase().includes(searchText) : true;
+      const matchesSearchText = searchText ? data.megnevezes.toLowerCase().includes(searchText) : true;
 
       return matchesSearchText && matchesViewFilter;
     };
@@ -126,7 +127,7 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
   }
 
   // Action methods
-  editSite(site: SiteView): void {
+  editSite(site: SimpleSite): void {
     console.log('Edit site:', site);
 
     // Navigate to the SiteEditComponent with the site ID
@@ -134,14 +135,14 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
     );
   }
 
-  deleteSite(site: SiteView): void {
+  deleteSite(site: SimpleSite): void {
     console.log('Delete site:', site);
 
     // In a real application, you would show a confirmation dialog
-    if (confirm(`Are you sure you want to delete ${site.name}?`)) {
+    if (confirm(`Are you sure you want to delete ${site.megnevezes}?`)) {
       this.loading = true;
 
-      const subscription = this.dataService.deleteDocument('sites', site.id)
+      const subscription = this.dataService.deleteDocument('sites', +site.id)
         .pipe(
           tap(success => {
             if (success) {
@@ -158,10 +159,10 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
     }
   }
 
-  viewSite(site: SiteView): void {
+  viewSite(site: SimpleSite): void {
     console.log('View site:', site);
     // In a real application, you would navigate to a detail view
-    alert(`Viewing details for: ${site.name}`);
+    alert(`Viewing details for: ${site.megnevezes}`);
   }
 
   // Create new site
@@ -205,10 +206,10 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
   loadSites(): void {
     this.loading = true;
 
-    const subscription = this.dataService.getCollection('sites')
+    const subscription = this.dataService.getSimpleSitesCollection('simpleSites')
       .pipe(
         tap(sites => {
-          this.sites = sites;
+          this.simpleSites = sites;
           this.dataSource.data = sites;
           console.log('Sites loaded:', sites);
 
@@ -256,7 +257,7 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
         if (sites.length > 1) {
           return this.addSitesSequentially(sites.slice(1));
         }
-        return this.dataService.getCollection('sites').pipe(first());
+        return this.dataService.getSitesCollection('sites').pipe(first());
       })
     );
   }

@@ -4,10 +4,10 @@ import {BehaviorSubject, Observable, catchError, map, of, tap} from 'rxjs';
 import {Site} from '../site/interfaces/site.interface';
 
 // Define an interface for backward compatibility with existing code
-export interface SiteView {
-  id: string;
-  name: string;
-  type: string;
+export interface SimpleSite {
+  id: number;
+  megnevezes: string;
+  tipus_nev: string;
   county: string;
   settlement: string;
   size: number;
@@ -26,9 +26,11 @@ export interface SiteView {
   providedIn: 'root'
 })
 export class DataService {
-  private sitesSubject = new BehaviorSubject<SiteView[]>([]);
+  private sitesSubject = new BehaviorSubject<Site[]>([]);
   // Expose sites as an Observable
-  public sites$: Observable<SiteView[]> = this.sitesSubject.asObservable();
+  public sites$: Observable<Site[]> = this.sitesSubject.asObservable();
+  private simpleSitesSubject = new BehaviorSubject<SimpleSite[]>([]);
+  public simpleSites$: Observable<SimpleSite[]> = this.simpleSitesSubject.asObservable();
   private sitesLoaded = false;
   private nextId = 1;
 
@@ -47,10 +49,7 @@ export class DataService {
 
     this.http.get<any>('assets/data/sites.json').pipe(
       map(sitesData => {
-
-        // Map the data from the JSON format to the Site interface and then to SiteView
         return sitesData.sites.map((siteData: any) => {
-          // Create a Site object from the JSON data
           const site: Site = {
             id: siteData.id,
             inaktiv: siteData.inaktiv || false,
@@ -105,11 +104,13 @@ export class DataService {
           };
 
           // Then convert to SiteView for backward compatibility
-          return this.siteToSiteView(site);
+          return site; // this.siteToSimpleSite(site);
         });
       }),
-      tap(sites => {
+      tap((sites: Site[]) => {
         this.sitesSubject.next(sites);
+        this.simpleSitesSubject.next(sites.map(site => this.siteToSimpleSite(site)));
+
         this.sitesLoaded = true;
         console.log('Data service initialized with', sites.length, 'sites');
       }),
@@ -125,7 +126,7 @@ export class DataService {
   /**
    * Get all sites as an Observable
    */
-  getCollection(collectionName: string): Observable<SiteView[]> {
+  getSitesCollection(collectionName: string): Observable<Site[]> {
     if (!this.sitesLoaded) {
       this.initialize();
     }
@@ -135,6 +136,18 @@ export class DataService {
     }
 
     return this.sites$;
+  }
+
+  getSimpleSitesCollection(collectionName: string): Observable<SimpleSite[]> {
+    if (!this.sitesLoaded) {
+      this.initialize();
+    }
+
+    if (collectionName !== 'simpleSites') {
+      console.warn(`Collection ${collectionName} not supported, returning simpleSites instead`);
+    }
+
+    return this.simpleSites$;
   }
 
   /**
@@ -207,11 +220,11 @@ export class DataService {
       fout: undefined
     };
 
-    // Convert to SiteView for backward compatibility
-    const newSiteView = this.siteToSiteView(newSite);
-
     const currentSites = this.sitesSubject.getValue();
-    this.sitesSubject.next([...currentSites, newSiteView]);
+    this.sitesSubject.next([...currentSites, newSite]);
+
+    const currentSimpleSites = this.simpleSitesSubject.getValue();
+    this.simpleSitesSubject.next([...currentSimpleSites, this.siteToSimpleSite(newSite)]);
 
     return of(azonosito);
   }
@@ -219,7 +232,7 @@ export class DataService {
   /**
    * Update a site
    */
-  updateDocument(collectionName: string, docId: string, data: any): Observable<boolean> {
+  updateDocument(collectionName: string, docId: number, data: any): Observable<boolean> {
     if (!this.sitesLoaded) {
       this.initialize();
     }
@@ -254,7 +267,7 @@ export class DataService {
   /**
    * Delete a site
    */
-  deleteDocument(collectionName: string, docId: string): Observable<boolean> {
+  deleteDocument(collectionName: string, docId: number): Observable<boolean> {
     if (!this.sitesLoaded) {
       this.initialize();
     }
@@ -286,13 +299,11 @@ export class DataService {
   /**
    * Convert a Site object to a SiteView object for backward compatibility
    */
-  private siteToSiteView(site: Site): SiteView {
-    console.log(site);
-
+  private siteToSimpleSite(site: Site): SimpleSite {
     return {
-      id: site.azonosito,
-      name: site.megnevezes,
-      type: site.tipus_nev,
+      id: site.id,
+      megnevezes: site.megnevezes,
+      tipus_nev: site.tipus_nev,
       county: site.megye_nev,
       settlement: site.telepules_nev,
       size: site.meret,

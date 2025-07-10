@@ -17,80 +17,641 @@
 
       <!-- Edit form -->
       <form [formGroup]="siteForm" *ngIf="!loading && !error" (ngSubmit)="saveSite()">
-        <div class="form-row">
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Név</mat-label>
-            <input matInput formControlName="name" placeholder="Telephely neve">
-            <mat-error *ngIf="siteForm.get('name')?.hasError('required')">
-              Név megadása kötelező
-            </mat-error>
-          </mat-form-field>
+        <mat-tab-group>
+          <!-- Basic Information Tab -->
+          <mat-tab label="Alapadatok">
+            <div class="tab-content">
+              <h3>Alapadatok</h3>
 
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Angol név</mat-label>
-            <input matInput formControlName="nameEnglish" placeholder="Telephely angol neve">
-          </mat-form-field>
-        </div>
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Név</mat-label>
+                  <input matInput formControlName="name" placeholder="Telephely neve">
+                  <mat-error *ngIf="siteForm.get('name')?.hasError('required')">
+                    Név megadása kötelező
+                  </mat-error>
+                </mat-form-field>
 
-        <div class="form-row">
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Típus</mat-label>
-            <mat-select formControlName="type">
-              <mat-option *ngFor="let type of siteTypes" [value]="type.value">
-                {{ type.viewValue }}
-              </mat-option>
-            </mat-select>
-            <mat-error *ngIf="siteForm.get('type')?.hasError('required')">
-              Típus kiválasztása kötelező
-            </mat-error>
-          </mat-form-field>
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Angol név</mat-label>
+                  <input matInput formControlName="nameEnglish" placeholder="Telephely angol neve">
+                </mat-form-field>
+              </div>
 
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Régió</mat-label>
-            <input matInput formControlName="region" placeholder="Régió">
-          </mat-form-field>
-        </div>
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Típus</mat-label>
+                  <mat-select formControlName="type">
+                    <mat-option *ngFor="let type of siteTypes" [value]="type.value">
+                      {{ type.viewValue }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="siteForm.get('type')?.hasError('required')">
+                    Típus kiválasztása kötelező
+                  </mat-error>
+                </mat-form-field>
 
-        <div class="form-row">
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Vármegye</mat-label>
-            <input matInput formControlName="county" placeholder="Vármegye">
-            <mat-error *ngIf="siteForm.get('county')?.hasError('required')">
-              Vármegye megadása kötelező
-            </mat-error>
-          </mat-form-field>
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Azonosító</mat-label>
+                  <input matInput formControlName="azonosito" placeholder="Azonosító" readonly>
+                </mat-form-field>
+              </div>
 
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Település</mat-label>
-            <input matInput formControlName="settlement" placeholder="Település">
-            <mat-error *ngIf="siteForm.get('settlement')?.hasError('required')">
-              Település megadása kötelező
-            </mat-error>
-          </mat-form-field>
-        </div>
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Státusz</mat-label>
+                  <mat-select formControlName="status">
+                    <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+                      {{ status.viewValue }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
 
-        <div class="form-row">
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Irányítószám</mat-label>
-            <input matInput formControlName="postalCode" placeholder="Irányítószám">
-          </mat-form-field>
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Inaktív magyarázat</mat-label>
+                  <input matInput formControlName="inaktivMagyarazat" placeholder="Inaktív magyarázat">
+                </mat-form-field>
+              </div>
 
-          <mat-form-field appearance="outline" class="form-field">
-            <mat-label>Méret (m²)</mat-label>
-            <input matInput type="number" formControlName="size" placeholder="Méret">
-            <mat-error *ngIf="siteForm.get('size')?.hasError('required')">
-              Méret megadása kötelező
-            </mat-error>
-            <mat-error *ngIf="siteForm.get('size')?.hasError('min')">
-              A méretnek nagyobbnak kell lennie nullánál
-            </mat-error>
-          </mat-form-field>
-        </div>
+              <mat-form-field appearance="outline" class="form-field full-width">
+                <mat-label>Megjegyzések</mat-label>
+                <textarea matInput formControlName="notes" placeholder="Megjegyzések" rows="4"></textarea>
+              </mat-form-field>
+            </div>
+          </mat-tab>
 
-        <mat-form-field appearance="outline" class="form-field full-width">
-          <mat-label>Megjegyzések</mat-label>
-          <textarea matInput formControlName="notes" placeholder="Megjegyzések" rows="4"></textarea>
-        </mat-form-field>
+          <!-- Location Tab -->
+          <mat-tab label="Helyszín">
+            <div class="tab-content">
+              <h3>Helyszín adatok</h3>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Régió</mat-label>
+                  <input matInput formControlName="region" placeholder="Régió">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Körzet</mat-label>
+                  <input matInput formControlName="korzet" placeholder="Körzet">
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Vármegye</mat-label>
+                  <input matInput formControlName="county" placeholder="Vármegye">
+                  <mat-error *ngIf="siteForm.get('county')?.hasError('required')">
+                    Vármegye megadása kötelező
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Település</mat-label>
+                  <input matInput formControlName="settlement" placeholder="Település">
+                  <mat-error *ngIf="siteForm.get('settlement')?.hasError('required')">
+                    Település megadása kötelező
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Irányítószám</mat-label>
+                  <input matInput formControlName="postalCode" placeholder="Irányítószám">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Utca</mat-label>
+                  <input matInput formControlName="street" placeholder="Utca">
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>GPS Szélesség</mat-label>
+                  <input matInput type="number" formControlName="gpsSzelesseg" placeholder="GPS Szélesség">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>GPS Hosszúság</mat-label>
+                  <input matInput type="number" formControlName="gpsHosszusag" placeholder="GPS Hosszúság">
+                </mat-form-field>
+              </div>
+
+              <mat-form-field appearance="outline" class="form-field full-width">
+                <mat-label>Térkép link</mat-label>
+                <input matInput formControlName="terkepLink" placeholder="Térkép link">
+              </mat-form-field>
+
+              <!-- Helyrajzi számok table -->
+              <div class="table-container">
+                <h4>Helyrajzi számok</h4>
+                <table mat-table [dataSource]="helyrajziSzamokArray.controls" class="mat-elevation-z2 full-width">
+                  <!-- Helyrajzi szám Column -->
+                  <ng-container matColumnDef="helyrajziSzam">
+                    <th mat-header-cell *matHeaderCellDef>Helyrajzi szám</th>
+                    <td mat-cell *matCellDef="let item; let i = index">
+                      <mat-form-field appearance="outline" class="table-form-field">
+                        <input matInput [formControl]="item.get('helyrajziSzam')" placeholder="Helyrajzi szám">
+                      </mat-form-field>
+                    </td>
+                  </ng-container>
+
+                  <!-- Actions Column -->
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef>Műveletek</th>
+                    <td mat-cell *matCellDef="let item; let i = index">
+                      <button mat-icon-button color="warn" (click)="removeHelyrajziSzam(i)" type="button">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="hrszColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: hrszColumns;"></tr>
+                </table>
+
+                <div class="table-actions">
+                  <button mat-raised-button color="primary" (click)="addHelyrajziSzam()" type="button">
+                    <mat-icon>add</mat-icon> Új helyrajzi szám
+                  </button>
+                </div>
+              </div>
+            </div>
+          </mat-tab>
+
+          <!-- Technical Information Tab -->
+          <mat-tab label="Műszaki adatok">
+            <div class="tab-content">
+              <h3>Műszaki adatok</h3>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Méret (m²)</mat-label>
+                  <input matInput type="number" formControlName="size" placeholder="Méret">
+                  <mat-error *ngIf="siteForm.get('size')?.hasError('required')">
+                    Méret megadása kötelező
+                  </mat-error>
+                  <mat-error *ngIf="siteForm.get('size')?.hasError('min')">
+                    A méretnek nagyobbnak kell lennie nullánál
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Budapest távolság (km)</mat-label>
+                  <input matInput type="number" formControlName="bpTav" placeholder="Budapest távolság">
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <div class="checkbox-field">
+                  <mat-checkbox formControlName="iparVaganyVan">Iparvágány van</mat-checkbox>
+                </div>
+
+                <div class="checkbox-field">
+                  <mat-checkbox formControlName="epuletVan">Épület van</mat-checkbox>
+                </div>
+              </div>
+
+              <h4>Közművek</h4>
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Áram (kW)</mat-label>
+                  <input matInput type="number" formControlName="aram" placeholder="Áram">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Gáz (m³/h)</mat-label>
+                  <input matInput type="number" formControlName="gaz" placeholder="Gáz">
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Víz (m³/h)</mat-label>
+                  <input matInput type="number" formControlName="viz" placeholder="Víz">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Ipari víz (m³/h)</mat-label>
+                  <input matInput type="number" formControlName="ipariviz" placeholder="Ipari víz">
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Szennyvíz (m³/h)</mat-label>
+                  <input matInput type="number" formControlName="szennyviz" placeholder="Szennyvíz">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Kiajánlható</mat-label>
+                  <input matInput type="number" formControlName="kiajanlhato" placeholder="Kiajánlható">
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Birtoknév</mat-label>
+                  <input matInput formControlName="birtokne" placeholder="Birtoknév">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Állapot</mat-label>
+                  <input matInput formControlName="allapot" placeholder="Állapot">
+                </mat-form-field>
+              </div>
+
+              <mat-form-field appearance="outline" class="form-field full-width">
+                <mat-label>Egyéb</mat-label>
+                <textarea matInput formControlName="egyeb" placeholder="Egyéb" rows="2"></textarea>
+              </mat-form-field>
+            </div>
+          </mat-tab>
+
+          <!-- Buildings Tab -->
+          <mat-tab label="Épületek">
+            <div class="tab-content">
+              <mat-accordion>
+                <!-- Csarnok Section -->
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>Csarnok</mat-panel-title>
+                  </mat-expansion-panel-header>
+
+                  <div formGroupName="csarnok">
+                    <div class="form-row">
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Terület (m²)</mat-label>
+                        <input matInput type="number" formControlName="terulet" placeholder="Terület">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Belmagasság (m)</mat-label>
+                        <input matInput type="number" formControlName="belmagassag" placeholder="Belmagasság">
+                      </mat-form-field>
+                    </div>
+
+                    <div class="form-row">
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Kapacitás</mat-label>
+                        <input matInput type="number" formControlName="kapacitas" placeholder="Kapacitás">
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </mat-expansion-panel>
+
+                <!-- Iroda Section -->
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>Iroda</mat-panel-title>
+                  </mat-expansion-panel-header>
+
+                  <div formGroupName="iroda">
+                    <div class="form-row">
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Terület (m²)</mat-label>
+                        <input matInput type="number" formControlName="terulet" placeholder="Terület">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Szintek száma</mat-label>
+                        <input matInput type="number" formControlName="szintek" placeholder="Szintek száma">
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </mat-expansion-panel>
+
+                <!-- Zöldmező Section -->
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>Zöldmező</mat-panel-title>
+                  </mat-expansion-panel-header>
+
+                  <div formGroupName="zoldmezo">
+                    <div class="form-row">
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Terület (m²)</mat-label>
+                        <input matInput type="number" formControlName="terulet" placeholder="Terület">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Beépíthetőség (%)</mat-label>
+                        <input matInput type="number" formControlName="beepithetoseg" placeholder="Beépíthetőség">
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </mat-expansion-panel>
+              </mat-accordion>
+            </div>
+          </mat-tab>
+
+          <!-- Distances Tab -->
+          <mat-tab label="Távolságok">
+            <div class="tab-content">
+              <h3>Távolságok</h3>
+
+              <mat-accordion>
+                <!-- Autópálya Section -->
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>Autópálya</mat-panel-title>
+                  </mat-expansion-panel-header>
+
+                  <div formGroupName="autoPalya">
+                    <div class="form-row">
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Távolság (km)</mat-label>
+                        <input matInput type="number" formControlName="tavolsag" placeholder="Távolság">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Név</mat-label>
+                        <input matInput formControlName="nev" placeholder="Név">
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </mat-expansion-panel>
+
+                <!-- Vasútállomás Section -->
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>Vasútállomás</mat-panel-title>
+                  </mat-expansion-panel-header>
+
+                  <div formGroupName="vasutallomas">
+                    <div class="form-row">
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Távolság (km)</mat-label>
+                        <input matInput type="number" formControlName="tavolsag" placeholder="Távolság">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Név</mat-label>
+                        <input matInput formControlName="nev" placeholder="Név">
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </mat-expansion-panel>
+
+                <!-- Folyami kikötő Section -->
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>Folyami kikötő</mat-panel-title>
+                  </mat-expansion-panel-header>
+
+                  <div formGroupName="folyamiKikoto">
+                    <div class="form-row">
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Távolság (km)</mat-label>
+                        <input matInput type="number" formControlName="tavolsag" placeholder="Távolság">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Név</mat-label>
+                        <input matInput formControlName="nev" placeholder="Név">
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </mat-expansion-panel>
+
+                <!-- Autóbuszmegálló Section -->
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>Autóbuszmegálló</mat-panel-title>
+                  </mat-expansion-panel-header>
+
+                  <div formGroupName="autobuszmegallo">
+                    <div class="form-row">
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Távolság (km)</mat-label>
+                        <input matInput type="number" formControlName="tavolsag" placeholder="Távolság">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Név</mat-label>
+                        <input matInput formControlName="nev" placeholder="Név">
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </mat-expansion-panel>
+
+                <!-- Lakóterület Section -->
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>Lakóterület</mat-panel-title>
+                  </mat-expansion-panel-header>
+
+                  <div formGroupName="lakoterulet">
+                    <div class="form-row">
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Távolság (km)</mat-label>
+                        <input matInput type="number" formControlName="tavolsag" placeholder="Távolság">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Név</mat-label>
+                        <input matInput formControlName="nev" placeholder="Név">
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </mat-expansion-panel>
+
+                <!-- Főút Section -->
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>Főút</mat-panel-title>
+                  </mat-expansion-panel-header>
+
+                  <div formGroupName="fout">
+                    <div class="form-row">
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Távolság (km)</mat-label>
+                        <input matInput type="number" formControlName="tavolsag" placeholder="Távolság">
+                      </mat-form-field>
+
+                      <mat-form-field appearance="outline" class="form-field">
+                        <mat-label>Név</mat-label>
+                        <input matInput formControlName="nev" placeholder="Név">
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </mat-expansion-panel>
+              </mat-accordion>
+            </div>
+          </mat-tab>
+
+          <!-- Contacts Tab -->
+          <mat-tab label="Kapcsolattartók">
+            <div class="tab-content">
+              <h3>Kapcsolattartók</h3>
+
+              <div class="table-container">
+                <table mat-table [dataSource]="kapcsolattartokArray.controls" class="mat-elevation-z2 full-width">
+                  <!-- Név Column -->
+                  <ng-container matColumnDef="nev">
+                    <th mat-header-cell *matHeaderCellDef>Név</th>
+                    <td mat-cell *matCellDef="let item; let i = index">
+                      <mat-form-field appearance="outline" class="table-form-field">
+                        <input matInput [formControl]="item.get('nev')" placeholder="Név">
+                      </mat-form-field>
+                    </td>
+                  </ng-container>
+
+                  <!-- Telefon Column -->
+                  <ng-container matColumnDef="telefon">
+                    <th mat-header-cell *matHeaderCellDef>Telefon</th>
+                    <td mat-cell *matCellDef="let item; let i = index">
+                      <mat-form-field appearance="outline" class="table-form-field">
+                        <input matInput [formControl]="item.get('telefon')" placeholder="Telefon">
+                      </mat-form-field>
+                    </td>
+                  </ng-container>
+
+                  <!-- Email Column -->
+                  <ng-container matColumnDef="email">
+                    <th mat-header-cell *matHeaderCellDef>Email</th>
+                    <td mat-cell *matCellDef="let item; let i = index">
+                      <mat-form-field appearance="outline" class="table-form-field">
+                        <input matInput [formControl]="item.get('email')" placeholder="Email">
+                      </mat-form-field>
+                    </td>
+                  </ng-container>
+
+                  <!-- Actions Column -->
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef>Műveletek</th>
+                    <td mat-cell *matCellDef="let item; let i = index">
+                      <button mat-icon-button color="warn" (click)="removeKapcsolattarto(i)" type="button">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="kapcsolattartoColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: kapcsolattartoColumns;"></tr>
+                </table>
+
+                <div class="table-actions">
+                  <button mat-raised-button color="primary" (click)="addKapcsolattarto()" type="button">
+                    <mat-icon>add</mat-icon> Új kapcsolattartó
+                  </button>
+                </div>
+              </div>
+            </div>
+          </mat-tab>
+
+          <!-- Documents Tab -->
+          <mat-tab label="Dokumentumok">
+            <div class="tab-content">
+              <h3>Dokumentumok</h3>
+
+              <div class="table-container">
+                <table mat-table [dataSource]="dokumentumokArray.controls" class="mat-elevation-z2 full-width">
+                  <!-- Név Column -->
+                  <ng-container matColumnDef="nev">
+                    <th mat-header-cell *matHeaderCellDef>Név</th>
+                    <td mat-cell *matCellDef="let item; let i = index">
+                      <mat-form-field appearance="outline" class="table-form-field">
+                        <input matInput [formControl]="item.get('nev')" placeholder="Név">
+                      </mat-form-field>
+                    </td>
+                  </ng-container>
+
+                  <!-- Típus Column -->
+                  <ng-container matColumnDef="tipus">
+                    <th mat-header-cell *matHeaderCellDef>Típus</th>
+                    <td mat-cell *matCellDef="let item; let i = index">
+                      <mat-form-field appearance="outline" class="table-form-field">
+                        <input matInput [formControl]="item.get('tipus')" placeholder="Típus">
+                      </mat-form-field>
+                    </td>
+                  </ng-container>
+
+                  <!-- Feltöltve Column -->
+                  <ng-container matColumnDef="feltoltve">
+                    <th mat-header-cell *matHeaderCellDef>Feltöltve</th>
+                    <td mat-cell *matCellDef="let item; let i = index">
+                      <mat-form-field appearance="outline" class="table-form-field">
+                        <input matInput [formControl]="item.get('feltoltve')" placeholder="Feltöltve" readonly>
+                      </mat-form-field>
+                    </td>
+                  </ng-container>
+
+                  <!-- Actions Column -->
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef>Műveletek</th>
+                    <td mat-cell *matCellDef="let item; let i = index">
+                      <button mat-icon-button color="warn" (click)="removeDokumentum(i)" type="button">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="dokumentumColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: dokumentumColumns;"></tr>
+                </table>
+
+                <div class="table-actions">
+                  <button mat-raised-button color="primary" (click)="addDokumentum()" type="button">
+                    <mat-icon>add</mat-icon> Új dokumentum
+                  </button>
+                </div>
+              </div>
+            </div>
+          </mat-tab>
+
+          <!-- Details Tab -->
+          <mat-tab label="Részletek">
+            <div class="tab-content">
+              <h3>Telephely részletek</h3>
+
+              <div class="table-container">
+                <table mat-table [dataSource]="telephelyReszletekArray.controls" class="mat-elevation-z2 full-width">
+                  <!-- Név Column -->
+                  <ng-container matColumnDef="nev">
+                    <th mat-header-cell *matHeaderCellDef>Név</th>
+                    <td mat-cell *matCellDef="let item; let i = index">
+                      <mat-form-field appearance="outline" class="table-form-field">
+                        <input matInput [formControl]="item.get('nev')" placeholder="Név">
+                      </mat-form-field>
+                    </td>
+                  </ng-container>
+
+                  <!-- Érték Column -->
+                  <ng-container matColumnDef="ertek">
+                    <th mat-header-cell *matHeaderCellDef>Érték</th>
+                    <td mat-cell *matCellDef="let item; let i = index">
+                      <mat-form-field appearance="outline" class="table-form-field">
+                        <input matInput [formControl]="item.get('ertek')" placeholder="Érték">
+                      </mat-form-field>
+                    </td>
+                  </ng-container>
+
+                  <!-- Actions Column -->
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef>Műveletek</th>
+                    <td mat-cell *matCellDef="let item; let i = index">
+                      <button mat-icon-button color="warn" (click)="removeTelephelyReszlet(i)" type="button">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="['nev', 'ertek', 'actions']"></tr>
+                  <tr mat-row *matRowDef="let row; columns: ['nev', 'ertek', 'actions'];"></tr>
+                </table>
+
+                <div class="table-actions">
+                  <button mat-raised-button color="primary" (click)="addTelephelyReszlet()" type="button">
+                    <mat-icon>add</mat-icon> Új részlet
+                  </button>
+                </div>
+              </div>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
       </form>
     </mat-card-content>
 

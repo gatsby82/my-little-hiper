@@ -155,7 +155,7 @@ export class MockDataService {
    * Clear all sites from the database and populate with random data
    */
   resetAndPopulateDatabase(count: number = 20): Observable<void> {
-    return this.dataService.getCollection('sites').pipe(
+    return this.dataService.getSitesCollection('sites').pipe(
       switchMap(existingSites => {
         console.log(`Deleting ${existingSites.length} existing sites...`);
 
