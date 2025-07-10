@@ -1,7 +1,7 @@
 import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {MatButton, MatIconButton} from "@angular/material/button";
 import {MatTableDataSource, MatTableModule} from "@angular/material/table";
-import {MatPaginator, MatPaginatorModule} from "@angular/material/paginator";
+import {MatPaginator, MatPaginatorIntl, MatPaginatorModule} from "@angular/material/paginator";
 import {MatSort, MatSortModule} from "@angular/material/sort";
 import {MatIcon} from "@angular/material/icon";
 import {MatInputModule} from "@angular/material/input";
@@ -13,6 +13,7 @@ import {NgForOf} from "@angular/common";
 import {DataService, SimpleSite} from "../../services/data.service";
 import {Observable, Subscription, finalize, first, switchMap, tap} from "rxjs";
 import {Router} from "@angular/router";
+import {HungarianPaginatorIntlService} from "../../services/hungarian-paginator-intl.service";
 
 @Component({
   selector: 'app-site-search',
@@ -30,6 +31,9 @@ import {Router} from "@angular/router";
     MatToolbarModule,
     FormsModule,
     NgForOf
+  ],
+  providers: [
+    { provide: MatPaginatorIntl, useClass: HungarianPaginatorIntlService }
   ],
   templateUrl: './site-search.component.html',
   styleUrl: './site-search.component.scss'
