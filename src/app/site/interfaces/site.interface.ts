@@ -8,7 +8,7 @@ import { TelephelyHrsz } from './telephely-hrsz.interface';
 import { Tavolsag } from './tavolsag.interface';
 import {Csarnok} from "./csarnok.interface";
 
-export interface Telephely {
+export interface Site {
   id: number;
   inaktiv: boolean;
   inaktivMagyarazat: string;

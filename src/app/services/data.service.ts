@@ -2,59 +2,59 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, catchError, map, of, tap } from 'rxjs';
 
-export interface Site {
-  id: string;
-  name: string;
-  type: string;
-  county: string;
-  settlement: string;
-  size: number;
-  createdAt?: string;
-  lastUpdated?: string;
-
-  // Additional properties from sites.json
-  nameEnglish?: string;  // MEGNEVEZES_ANGOL
-  region?: string;       // REGIO
-  postalCode?: string;   // IRSZ
-  migrated?: boolean;    // MIGRALT
-  notes?: string;        // MEGJEGYZES
-
-  // Properties for complex objects that might be added in the future
-  address?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    postalCode?: string;
-  };
-
-  contact?: {
-    name?: string;
-    email?: string;
-    phone?: string;
-    position?: string;
-  };
-
-  facilities?: {
-    hasParking?: boolean;
-    parkingCapacity?: number;
-    hasLoadingDock?: boolean;
-    loadingDockCount?: number;
-    hasSecurity?: boolean;
-    hasFireProtection?: boolean;
-  };
-
-  dimensions?: {
-    width?: number;
-    length?: number;
-    height?: number;
-    totalArea?: number;
-    usableArea?: number;
-  };
-
-  // Allow for any additional properties to be added in the future
-  [key: string]: any;
-}
+// export interface Site {
+//   id: string;
+//   name: string;
+//   type: string;
+//   county: string;
+//   settlement: string;
+//   size: number;
+//   createdAt?: string;
+//   lastUpdated?: string;
+//
+//   // Additional properties from sites.json
+//   nameEnglish?: string;  // MEGNEVEZES_ANGOL
+//   region?: string;       // REGIO
+//   postalCode?: string;   // IRSZ
+//   migrated?: boolean;    // MIGRALT
+//   notes?: string;        // MEGJEGYZES
+//
+//   // Properties for complex objects that might be added in the future
+//   address?: {
+//     street?: string;
+//     city?: string;
+//     state?: string;
+//     country?: string;
+//     postalCode?: string;
+//   };
+//
+//   contact?: {
+//     name?: string;
+//     email?: string;
+//     phone?: string;
+//     position?: string;
+//   };
+//
+//   facilities?: {
+//     hasParking?: boolean;
+//     parkingCapacity?: number;
+//     hasLoadingDock?: boolean;
+//     loadingDockCount?: number;
+//     hasSecurity?: boolean;
+//     hasFireProtection?: boolean;
+//   };
+//
+//   dimensions?: {
+//     width?: number;
+//     length?: number;
+//     height?: number;
+//     totalArea?: number;
+//     usableArea?: number;
+//   };
+//
+//   // Allow for any additional properties to be added in the future
+//   [key: string]: any;
+// }
 
 @Injectable({
   providedIn: 'root'
