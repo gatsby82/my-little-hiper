@@ -47,17 +47,17 @@ export interface Site {
   gpsSzelesseg: number;
   gpsHosszusag: number;
   // Kapcsolt entitások
-  csarnok: Csarnok[];
-  iroda: Iroda[];
-  zoldmezo: Zoldmezo[];
+  csarnok: Csarnok;
+  iroda: Iroda;
+  zoldmezo: Zoldmezo;
   kapcsolattartok: TelephelyKapcsolattarto[];
   dokumentumok: Fajl[];
   telephelyReszletek: TelephelyReszlet[];
   helyrajziSzamok: TelephelyHrsz[];
-  autoPalya: Tavolsag[];
-  vasutallomas: Tavolsag[];
-  folyamikiKikoto: Tavolsag[];
-  autobusmegallo: Tavolsag[];
-  lakoterulet: Tavolsag[];
-  fout: Tavolsag[];
+  autoPalya: Tavolsag;
+  vasutallomas: Tavolsag;
+  folyamikiKikoto: Tavolsag;
+  autobusmegallo: Tavolsag;
+  lakoterulet: Tavolsag;
+  fout: Tavolsag;
 }

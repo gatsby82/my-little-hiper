@@ -12,6 +12,7 @@ import {FormsModule} from "@angular/forms";
 import {NgForOf} from "@angular/common";
 import {DataService, SiteView} from "../../services/data.service";
 import {Observable, Subscription, finalize, first, switchMap, tap} from "rxjs";
+import {Router} from "@angular/router";
 
 // SiteView interface is now imported from data.service
 
@@ -36,115 +37,117 @@ import {Observable, Subscription, finalize, first, switchMap, tap} from "rxjs";
   styleUrl: './site-search.component.scss'
 })
 export class SiteSearchComponent implements OnInit, OnDestroy {
-    // Define columns to display
-    displayedColumns: string[] = ['name', 'type', 'county', 'settlement', 'size', 'actions'];
+  // Define columns to display
+  displayedColumns: string[] = ['name', 'type', 'county', 'settlement', 'size', 'actions'];
 
-    // Data source for the table
-    dataSource = new MatTableDataSource<SiteView>();
+  // Data source for the table
+  dataSource = new MatTableDataSource<SiteView>();
 
-    // Search filter
-    searchText = '';
+  // Search filter
+  searchText = '';
 
-    // View options
-    viewOptions = [
-      { value: 'all', viewValue: 'Összes telephely' },
-      { value: 'warehouse', viewValue: 'Raktárak' },
-      { value: 'office', viewValue: 'Irodák' },
-      { value: 'factory', viewValue: 'Gyártóüzemek' },
-      { value: 'logistics', viewValue: 'Logisztikai központok' }
-    ];
-    selectedView = 'all';
+  // View options
+  viewOptions = [
+    {value: 'all', viewValue: 'Összes telephely'},
+    {value: 'warehouse', viewValue: 'Raktárak'},
+    {value: 'office', viewValue: 'Irodák'},
+    {value: 'factory', viewValue: 'Gyártóüzemek'},
+    {value: 'logistics', viewValue: 'Logisztikai központok'}
+  ];
+  selectedView = 'all';
 
-    // Sites data
-    sites: SiteView[] = [];
+  // Sites data
+  sites: SiteView[] = [];
 
-    // Loading indicator
-    loading = false;
+  // Loading indicator
+  loading = false;
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
+  // Subscriptions
+  private subscriptions = new Subscription();
 
-    // Subscriptions
-    private subscriptions = new Subscription();
+  constructor(private dataService: DataService, private router: Router) {
+  }
 
-    @ViewChild(MatPaginator) paginator!: MatPaginator;
-    @ViewChild(MatSort) sort!: MatSort;
+  ngOnInit(): void {
+    // Load sites from data service
+    this.loadSites();
 
-    constructor(private dataService: DataService) {}
+    // Set up filter predicate to search by name
+    this.dataSource.filterPredicate = (data: SiteView, filter: string) => {
+      const searchTerms = filter.split('|');
+      const searchText = searchTerms[0].toLowerCase();
+      const viewFilter = searchTerms[1];
 
-    ngOnInit(): void {
-      // Load sites from data service
-      this.loadSites();
-
-      // Set up filter predicate to search by name
-      this.dataSource.filterPredicate = (data: SiteView, filter: string) => {
-        const searchTerms = filter.split('|');
-        const searchText = searchTerms[0].toLowerCase();
-        const viewFilter = searchTerms[1];
-
-        // Check if the site matches the view filter
-        let matchesViewFilter = true;
-        if (viewFilter !== 'all') {
-          switch (viewFilter) {
-            case 'warehouse':
-              matchesViewFilter = data.type === 'Raktár';
-              break;
-            case 'office':
-              matchesViewFilter = data.type === 'Iroda';
-              break;
-            case 'factory':
-              matchesViewFilter = data.type === 'Gyártóüzem';
-              break;
-            case 'logistics':
-              matchesViewFilter = data.type === 'Logisztikai központ';
-              break;
-          }
+      // Check if the site matches the view filter
+      let matchesViewFilter = true;
+      if (viewFilter !== 'all') {
+        switch (viewFilter) {
+          case 'warehouse':
+            matchesViewFilter = data.type === 'Raktár';
+            break;
+          case 'office':
+            matchesViewFilter = data.type === 'Iroda';
+            break;
+          case 'factory':
+            matchesViewFilter = data.type === 'Gyártóüzem';
+            break;
+          case 'logistics':
+            matchesViewFilter = data.type === 'Logisztikai központ';
+            break;
         }
-
-        // Check if the site name contains the search text
-        const matchesSearchText = searchText ? data.name.toLowerCase().includes(searchText) : true;
-
-        return matchesSearchText && matchesViewFilter;
-      };
-    }
-
-    ngAfterViewInit() {
-      // Set up paginator and sort after view is initialized
-      this.dataSource.paginator = this.paginator;
-      this.dataSource.sort = this.sort;
-    }
-
-    ngOnDestroy(): void {
-      // Clean up subscriptions
-      this.subscriptions.unsubscribe();
-    }
-
-    // Apply filters when search text or view selection changes
-    applyFilters(): void {
-      this.dataSource.filter = this.searchText.trim().toLowerCase() + '|' + this.selectedView;
-
-      if (this.dataSource.paginator) {
-        this.dataSource.paginator.firstPage();
       }
+
+      // Check if the site name contains the search text
+      const matchesSearchText = searchText ? data.name.toLowerCase().includes(searchText) : true;
+
+      return matchesSearchText && matchesViewFilter;
+    };
+  }
+
+  ngAfterViewInit() {
+    // Set up paginator and sort after view is initialized
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+  }
+
+  ngOnDestroy(): void {
+    // Clean up subscriptions
+    this.subscriptions.unsubscribe();
+  }
+
+  // Apply filters when search text or view selection changes
+  applyFilters(): void {
+    this.dataSource.filter = this.searchText.trim().toLowerCase() + '|' + this.selectedView;
+
+    if (this.dataSource.paginator) {
+      this.dataSource.paginator.firstPage();
     }
+  }
 
-    // Action methods
-    editSite(site: SiteView): void {
-      console.log('Edit site:', site);
+  // Action methods
+  editSite(site: SiteView): void {
+    console.log('Edit site:', site);
 
-      // In a real application, you would open a dialog to edit the site
-      // For now, we'll just update a field to demonstrate update
-      const updatedData = {
-        name: `${site.name} (Updated)`,
-        lastUpdated: new Date().toISOString()
-      };
+    // Navigate to the SiteEditComponent with the site ID
+    this.router.navigate(['/sites/edit', site.id]).then(r => console.log(r)
+    );
+  }
 
+  deleteSite(site: SiteView): void {
+    console.log('Delete site:', site);
+
+    // In a real application, you would show a confirmation dialog
+    if (confirm(`Are you sure you want to delete ${site.name}?`)) {
       this.loading = true;
 
-      const subscription = this.dataService.updateDocument('sites', site.id, updatedData)
+      const subscription = this.dataService.deleteDocument('sites', site.id)
         .pipe(
           tap(success => {
             if (success) {
-              console.log('Site updated');
+              console.log('Site deleted');
             } else {
-              console.error('Failed to update site');
+              console.error('Failed to delete site');
             }
           }),
           finalize(() => this.loading = false)
@@ -153,131 +156,108 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
 
       this.subscriptions.add(subscription);
     }
+  }
 
-    deleteSite(site: SiteView): void {
-      console.log('Delete site:', site);
+  viewSite(site: SiteView): void {
+    console.log('View site:', site);
+    // In a real application, you would navigate to a detail view
+    alert(`Viewing details for: ${site.name}`);
+  }
 
-      // In a real application, you would show a confirmation dialog
-      if (confirm(`Are you sure you want to delete ${site.name}?`)) {
-        this.loading = true;
+  // Create new site
+  createNewSite(): void {
+    console.log('Create new site');
 
-        const subscription = this.dataService.deleteDocument('sites', site.id)
-          .pipe(
-            tap(success => {
-              if (success) {
-                console.log('Site deleted');
-              } else {
-                console.error('Failed to delete site');
-              }
-            }),
-            finalize(() => this.loading = false)
-          )
-          .subscribe();
+    // In a real application, you would open a dialog to create a new site
+    // For now, we'll create a sample site to demonstrate create
+    const newSite = {
+      name: `New Site ${new Date().getTime()}`,
+      type: 'Raktár',
+      county: 'Budapest',
+      settlement: 'Budapest',
+      size: 1000,
+      createdAt: new Date().toISOString()
+    };
 
-        this.subscriptions.add(subscription);
-      }
-    }
+    this.loading = true;
 
-    viewSite(site: SiteView): void {
-      console.log('View site:', site);
-      // In a real application, you would navigate to a detail view
-      alert(`Viewing details for: ${site.name}`);
-    }
+    const subscription = this.dataService.addDocument('sites', newSite)
+      .pipe(
+        tap(newSiteId => {
+          console.log('New site created with ID:', newSiteId);
+        }),
+        finalize(() => this.loading = false)
+      )
+      .subscribe();
 
-    // Create new site
-    createNewSite(): void {
-      console.log('Create new site');
+    this.subscriptions.add(subscription);
+  }
 
-      // In a real application, you would open a dialog to create a new site
-      // For now, we'll create a sample site to demonstrate create
-      const newSite = {
-        name: `New Site ${new Date().getTime()}`,
-        type: 'Raktár',
-        county: 'Budapest',
-        settlement: 'Budapest',
-        size: 1000,
-        createdAt: new Date().toISOString()
-      };
+  // Export to Excel
+  exportToExcel(): void {
+    console.log('Export to Excel');
+    // Implement Excel export functionality
+    // This would typically generate an Excel file with the current data
+    alert('Excel export functionality would be implemented here');
+  }
 
-      this.loading = true;
+  // Load sites from data service
+  loadSites(): void {
+    this.loading = true;
 
-      const subscription = this.dataService.addDocument('sites', newSite)
-        .pipe(
-          tap(newSiteId => {
-            console.log('New site created with ID:', newSiteId);
-          }),
-          finalize(() => this.loading = false)
-        )
-        .subscribe();
+    const subscription = this.dataService.getCollection('sites')
+      .pipe(
+        tap(sites => {
+          this.sites = sites;
+          this.dataSource.data = sites;
+          console.log('Sites loaded:', sites);
 
-      this.subscriptions.add(subscription);
-    }
-
-    // Export to Excel
-    exportToExcel(): void {
-      console.log('Export to Excel');
-      // Implement Excel export functionality
-      // This would typically generate an Excel file with the current data
-      alert('Excel export functionality would be implemented here');
-    }
-
-    // Load sites from data service
-    loadSites(): void {
-      this.loading = true;
-
-      const subscription = this.dataService.getCollection('sites')
-        .pipe(
-          tap(sites => {
-            this.sites = sites;
-            this.dataSource.data = sites;
-            console.log('Sites loaded:', sites);
-
-            // If no data exists yet, initialize with sample data
-            if (sites.length === 0) {
-              this.initializeSampleData();
-            }
-          }),
-          finalize(() => this.loading = false)
-        )
-        .subscribe();
-
-      this.subscriptions.add(subscription);
-    }
-
-    // Initialize sample data if no data exists
-    initializeSampleData(): void {
-      const sampleSites = [
-        {name: 'Duna Raktárbázis', type: 'Raktár', county: 'Pest', settlement: 'Budapest', size: 1500},
-        {name: 'Hajdú Business Center', type: 'Iroda', county: 'Hajdú-Bihar', settlement: 'Debrecen', size: 800},
-        {name: 'Avas Ipari Park', type: 'Gyártóüzem', county: 'Borsod-Abaúj-Zemplén', settlement: 'Miskolc', size: 3000}
-      ];
-
-      console.log('Initializing sample data...');
-      this.loading = true;
-
-      // Add sites one by one
-      const subscription = this.addSitesSequentially(sampleSites)
-        .pipe(
-          tap(() => {
-            console.log('Sample data initialized');
-          }),
-          finalize(() => this.loading = false)
-        )
-        .subscribe();
-
-      this.subscriptions.add(subscription);
-    }
-
-    // Helper method to add sites sequentially
-    private addSitesSequentially(sites: any[]): Observable<any> {
-      // Use switchMap to chain the observables
-      return this.dataService.addDocument('sites', sites[0]).pipe(
-        switchMap(() => {
-          if (sites.length > 1) {
-            return this.addSitesSequentially(sites.slice(1));
+          // If no data exists yet, initialize with sample data
+          if (sites.length === 0) {
+            this.initializeSampleData();
           }
-          return this.dataService.getCollection('sites').pipe(first());
-        })
-      );
-    }
+        }),
+        finalize(() => this.loading = false)
+      )
+      .subscribe();
+
+    this.subscriptions.add(subscription);
+  }
+
+  // Initialize sample data if no data exists
+  initializeSampleData(): void {
+    const sampleSites = [
+      {name: 'Duna Raktárbázis', type: 'Raktár', county: 'Pest', settlement: 'Budapest', size: 1500},
+      {name: 'Hajdú Business Center', type: 'Iroda', county: 'Hajdú-Bihar', settlement: 'Debrecen', size: 800},
+      {name: 'Avas Ipari Park', type: 'Gyártóüzem', county: 'Borsod-Abaúj-Zemplén', settlement: 'Miskolc', size: 3000}
+    ];
+
+    console.log('Initializing sample data...');
+    this.loading = true;
+
+    // Add sites one by one
+    const subscription = this.addSitesSequentially(sampleSites)
+      .pipe(
+        tap(() => {
+          console.log('Sample data initialized');
+        }),
+        finalize(() => this.loading = false)
+      )
+      .subscribe();
+
+    this.subscriptions.add(subscription);
+  }
+
+  // Helper method to add sites sequentially
+  private addSitesSequentially(sites: any[]): Observable<any> {
+    // Use switchMap to chain the observables
+    return this.dataService.addDocument('sites', sites[0]).pipe(
+      switchMap(() => {
+        if (sites.length > 1) {
+          return this.addSitesSequentially(sites.slice(1));
+        }
+        return this.dataService.getCollection('sites').pipe(first());
+      })
+    );
+  }
 }

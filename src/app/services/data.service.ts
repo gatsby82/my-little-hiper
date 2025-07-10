@@ -50,6 +50,9 @@ export class DataService {
         // Map the data from the JSON format to the Site interface and then to SiteView
         return sitesData.sites.map((siteData: any) => {
           // First create a Site object with the new interface
+
+          console.log(siteData);
+
           const site: Site = {
             id: parseInt(siteData.AZONOSITO) || this.getNextId(),
             inaktiv: false,
