@@ -11,15 +11,8 @@ export interface SimpleSite {
   county: string;
   settlement: string;
   size: number;
-  createdAt?: string;
-  lastUpdated?: string;
   nameEnglish?: string;
   region?: string;
-  postalCode?: string;
-  migrated?: boolean;
-  notes?: string;
-
-  [key: string]: any;
 }
 
 @Injectable({
@@ -289,16 +282,10 @@ export class DataService {
     return of(true);
   }
 
-  /**
-   * Get the next ID for a new site
-   */
   private getNextId(): number {
     return this.nextId++;
   }
 
-  /**
-   * Convert a Site object to a SiteView object for backward compatibility
-   */
   private siteToSimpleSite(site: Site): SimpleSite {
     return {
       id: site.id,
@@ -307,13 +294,7 @@ export class DataService {
       county: site.megye_nev,
       settlement: site.telepules_nev,
       size: site.meret,
-      createdAt: site.letrehozva.toISOString(),
-      lastUpdated: site.modositva.toISOString(),
-      nameEnglish: site.megnevezesAngol,
-      region: site.regio_nev,
-      postalCode: site.irsz,
-      migrated: site.migralt,
-      notes: site.megjegyzes
+      region: site.regio_nev
     };
   }
 }

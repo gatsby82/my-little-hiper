@@ -13,9 +13,6 @@ import {NgForOf} from "@angular/common";
 import {DataService, SimpleSite} from "../../services/data.service";
 import {Observable, Subscription, finalize, first, switchMap, tap} from "rxjs";
 import {Router} from "@angular/router";
-import {Site} from "../interfaces/site.interface";
-
-// SiteView interface is now imported from data.service
 
 @Component({
   selector: 'app-site-search',
@@ -38,33 +35,26 @@ import {Site} from "../interfaces/site.interface";
   styleUrl: './site-search.component.scss'
 })
 export class SiteSearchComponent implements OnInit, OnDestroy {
-  // Define columns to display
   displayedColumns: string[] = ['name', 'type', 'county', 'settlement', 'size', 'actions'];
 
-  // Data source for the table
   dataSource = new MatTableDataSource<SimpleSite>();
 
-  // Search filter
   searchText = '';
 
-  // View options
-  viewOptions = [
+  tipusNevOptions = [
     {value: 'all', viewValue: 'Összes telephely'},
-    {value: 'warehouse', viewValue: 'Raktárak'},
-    {value: 'office', viewValue: 'Irodák'},
-    {value: 'factory', viewValue: 'Gyártóüzemek'},
-    {value: 'logistics', viewValue: 'Logisztikai központok'}
+    {value: 'Ipari park', viewValue: 'Ipari parkok'},
+    {value: 'Barnamezős terület', viewValue: 'Barnamezős területek'},
+    {value: 'Zöldmező', viewValue: 'Zöldmezők'},
   ];
-  selectedView = 'all';
+  selectedTipusNev = 'all';
 
-  // Sites data
   simpleSites: SimpleSite[] = [];
 
-  // Loading indicator
   loading = false;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
-  // Subscriptions
+
   private subscriptions = new Subscription();
 
   constructor(private dataService: DataService, private router: Router) {
@@ -84,22 +74,18 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
       let matchesViewFilter = true;
       if (viewFilter !== 'all') {
         switch (viewFilter) {
-          case 'warehouse':
-            matchesViewFilter = data.tipus_nev === 'Raktár';
+          case 'Ipari park':
+            matchesViewFilter = data.tipus_nev === 'Ipari park';
             break;
-          case 'office':
-            matchesViewFilter = data.tipus_nev === 'Iroda';
+          case 'Barnamezős terület':
+            matchesViewFilter = data.tipus_nev === 'Barnamezős terület';
             break;
-          case 'factory':
-            matchesViewFilter = data.tipus_nev === 'Gyártóüzem';
-            break;
-          case 'logistics':
-            matchesViewFilter = data.tipus_nev === 'Logisztikai központ';
+          case 'Zöldmező':
+            matchesViewFilter = data.tipus_nev === 'Zöldmező';
             break;
         }
       }
 
-      // Check if the site name contains the search text
       const matchesSearchText = searchText ? data.megnevezes.toLowerCase().includes(searchText) : true;
 
       return matchesSearchText && matchesViewFilter;
@@ -119,7 +105,7 @@ export class SiteSearchComponent implements OnInit, OnDestroy {
 
   // Apply filters when search text or view selection changes
   applyFilters(): void {
-    this.dataSource.filter = this.searchText.trim().toLowerCase() + '|' + this.selectedView;
+    this.dataSource.filter = this.searchText.trim().toLowerCase() + '|' + this.selectedTipusNev;
 
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();

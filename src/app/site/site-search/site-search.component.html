@@ -10,8 +10,8 @@
     <!-- View selector -->
     <mat-form-field appearance="outline" class="view-selector">
       <mat-label>Típus</mat-label>
-      <mat-select [(ngModel)]="selectedView" (selectionChange)="applyFilters()">
-        <mat-option *ngFor="let option of viewOptions" [value]="option.value">
+      <mat-select [(ngModel)]="selectedTipusNev" (selectionChange)="applyFilters()">
+        <mat-option *ngFor="let option of tipusNevOptions" [value]="option.value">
           {{option.viewValue}}
         </mat-option>
       </mat-select>
